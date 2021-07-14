@@ -1,10 +1,25 @@
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<MudThemeProvider Theme="themeProvider.Theme"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<CascadingValue Value="themeProvider">
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingValue>
+
+@code {
+    private ThemeProvider themeProvider = new ThemeProvider();
+
+    protected override void OnInitialized()
+    {
+        themeProvider.OnThemeChanged += _ => StateHasChanged();
+    }
+}
