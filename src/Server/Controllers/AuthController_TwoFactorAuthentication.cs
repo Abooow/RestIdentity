@@ -1,5 +1,6 @@
 ﻿using RestIdentity.Server.Models;
 using RestIdentity.Shared.Models;
+using RestIdentity.Shared.Wrapper;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using Microsoft.AspNetCore.Authorization;
@@ -10,12 +11,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Collections.Generic;
 using Identity = Microsoft.AspNetCore.Identity;
-using RestIdentity.Shared.Wrapper;
 
 namespace RestIdentity.Server.Controllers
 {
     public partial class AuthController
-{
+    {
         [AllowAnonymous]
         [HttpPost("loginWithTwoFactor")]
         public async Task<IActionResult> LoginWithTwoFactor(
