@@ -1,3 +1,4 @@
+using RestIdentity.Client.Infrastructure.Managers.Identity;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
@@ -16,6 +17,9 @@ namespace RestIdentity.Client
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddMudServices();
+
+            builder.Services.AddTransient<IAuthenticationFacade, AuthenticationFacade>();
+            builder.Services.AddTransient<IUserFacade, UserFacade>();
 
             await builder.Build().RunAsync();
         }

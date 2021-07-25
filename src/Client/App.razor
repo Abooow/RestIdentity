@@ -16,10 +16,11 @@
 </CascadingValue>
 
 @code {
-    private ThemeProvider themeProvider = new ThemeProvider();
+    private ThemeProvider themeProvider;
 
     protected override void OnInitialized()
     {
+        themeProvider = new ThemeProvider();
         themeProvider.OnThemeChanged += _ => StateHasChanged();
     }
 }

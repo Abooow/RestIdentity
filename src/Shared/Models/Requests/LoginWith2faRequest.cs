@@ -9,6 +9,8 @@ namespace RestIdentity.Shared.Models.Requests
         [DataType(DataType.Text)]
         public string TwoFactorCode { get; set; }
 
+        public bool RememberMe { get; set; }
+
         public bool RememberMachine { get; set; }
     }
 }

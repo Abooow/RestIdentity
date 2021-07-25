@@ -20,23 +20,22 @@ namespace RestIdentity.Server.Controllers
         [HttpPost("loginWithTwoFactor")]
         public async Task<IActionResult> LoginWithTwoFactor(
             [FromHeader(Name = "Identity.TwoFactorUserId")][Required(ErrorMessage = "The header Identity.TwoFactorUserId is requred")] string _,
-            [FromBody] LoginWith2faRequest request,
-            [FromQuery] bool rememberMe)
+            [FromBody] LoginWith2faRequest request)
         {
             ApplicationUser user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user is null)
                 return NotFound(Result.Fail("Unable to load two-factor authentication user.").AsNotFound());
 
             string authenticatorCode = request.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
-            Identity::SignInResult result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, rememberMe, request.RememberMachine);
+            Identity::SignInResult result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, request.RememberMe, request.RememberMachine);
 
-            return result.Succeeded ? Ok() 
+            return result.Succeeded ? Ok(Result.Success()) 
                 : BadRequest(Result.Fail("Invalid authenticator code.").AsBadRequest());
         }
 
         [Authorize]
         [HttpPost("enableTwoFactorAuth")]
-        public async Task<ActionResult<TwoFactorQRCode>> EnableTwoFactorAuth()
+        public async Task<IActionResult> EnableTwoFactorAuth()
         {
             ApplicationUser user = await _userManager.GetUserAsync(User);
             if (user is null)
@@ -50,7 +49,7 @@ namespace RestIdentity.Server.Controllers
                 await _userManager.ResetAuthenticatorKeyAsync(user);
                 unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
             }
-
+            
             string email = await _userManager.GetEmailAsync(user);
             string formattedKey = FormatKey(unformattedKey);
             string authenticatorUri = GenerateQrCodeUri(email, unformattedKey);
