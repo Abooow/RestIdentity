@@ -4,7 +4,7 @@ using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 using System.Threading.Tasks;
 
-namespace RestIdentity.Client.Infrastructure.Managers.Identity
+namespace RestIdentity.Client.Infrastructure.Facades.Identity
 {
     public interface IUserFacade
     {

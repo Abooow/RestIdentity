@@ -1,4 +1,4 @@
-using RestIdentity.Client.Infrastructure.Managers.Identity;
+using RestIdentity.Client.Infrastructure.Facades.Identity;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;

@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Client", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Shared", "src\Shared\RestIdentity.Shared.csproj", "{3D768613-3DC2-4E8C-A725-196DD9EEB4F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestIdentity.Client.Infrastructure", "RestIdentity.Client.Infrastructure\RestIdentity.Client.Infrastructure.csproj", "{A5A471FF-F40D-4EFA-A323-BF6294DD5D32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Client.Infrastructure", "RestIdentity.Client.Infrastructure\RestIdentity.Client.Infrastructure.csproj", "{A5A471FF-F40D-4EFA-A323-BF6294DD5D32}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace RestIdentity.Client.Infrastructure.Managers.Identity
+namespace RestIdentity.Client.Infrastructure.Facades.Identity
 {
     public class UserFacade : IUserFacade
     {
