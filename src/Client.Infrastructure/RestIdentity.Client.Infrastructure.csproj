@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Shared\RestIdentity.Shared.csproj" />
+    <ProjectReference Include="..\Shared\RestIdentity.Shared.csproj" />
   </ItemGroup>
 
 </Project>

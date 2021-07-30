@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\RestIdentity.Client.Infrastructure\RestIdentity.Client.Infrastructure.csproj" />
+    <ProjectReference Include="..\Client.Infrastructure\RestIdentity.Client.Infrastructure.csproj" />
     <ProjectReference Include="..\Shared\RestIdentity.Shared.csproj" />
   </ItemGroup>
 

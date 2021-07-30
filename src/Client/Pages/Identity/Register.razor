@@ -1,0 +1,63 @@
+﻿@page "/register"
+
+@inject IAuthenticationFacade authenticationFacade
+
+<div style="max-width: 400px;">
+    <EditForm Model="@registerRequset" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+
+       <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Email" Class="mt-3"
+                              @bind-Value="registerRequset.Email" />
+
+                <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                              @bind-Value="registerRequset.Password" InputType="InputType.Password" />
+                              
+                <MudTextField Label="Confirm Password" HelperText="Repeat the password" Class="mt-3"
+                              @bind-Value="registerRequset.PasswordConfirm" InputType="InputType.Password" />
+                              
+                <MudCheckBox Label="Agree Terms" Class="mt-3" Color="Color.Primary"
+                              @bind-Checked="registerRequset.AgreeTerms" />
+            </MudCardContent>
+
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+            </MudCardActions>
+        </MudCard>
+
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="my-4">
+            Fill out the form correctly to see the success message.
+        </MudText>
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Show Validation Summary">
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                    </MudText>
+                }
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </EditForm>
+</div>
+
+@code {
+    private RegisterRequest registerRequset;
+    private bool success;
+
+    protected override void OnInitialized()
+    {
+        registerRequset = new RegisterRequest();
+    }
+
+    private void OnValidSubmit()
+    {
+        Console.WriteLine("Success!");
+    }
+}
