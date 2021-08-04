@@ -1,0 +1,29 @@
+﻿<MudIconButton Icon="@themeIcon" OnClick="ChangeTheme" Color="Color.Inherit" Edge="Edge.End" Class="@Class" />
+
+@code {
+    [Parameter]
+    public string Class { get; set; }
+
+    [CascadingParameter]
+    private ThemeProvider themeProvider { get; set; }
+    
+    private string themeIcon;
+
+    protected override void OnInitialized()
+    {
+        UpdateThemeIcon();
+    }
+
+    private void ChangeTheme()
+    {
+        themeProvider.InvertTheme();
+        UpdateThemeIcon();
+    }
+
+    private void UpdateThemeIcon()
+    {
+        themeIcon = themeProvider.IsDarkTheme()
+            ? Icons.Material.Filled.LightMode
+            : Icons.Material.Filled.DarkMode;
+    }
+}

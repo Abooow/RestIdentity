@@ -1,37 +1,29 @@
-﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+﻿.center {
+    position: absolute;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%);
 }
 
-a, .btn-link {
-    color: #0366d6;
+.w-100 {
+    width: 100% !important;
 }
 
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+.w-50 {
+    width: 50% !important;
 }
 
-.content {
-    padding-top: 1.1rem;
+.h-100 {
+    height: 100% !important;
 }
 
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid red;
-}
-
-.validation-message {
-    color: red;
+.h-50 {
+    height: 50% !important;
 }
 
 #blazor-error-ui {
-    background: lightyellow;
+    background-color: #ca3030;
+    color: white;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     display: none;
@@ -47,6 +39,10 @@ a, .btn-link {
         position: absolute;
         right: 0.75rem;
         top: 0.5rem;
+    }
+
+    #blazor-error-ui .reload, .dismiss {
+        color: #0078d7;
     }
 
 .blazor-error-boundary {

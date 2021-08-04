@@ -1,0 +1,91 @@
+﻿@attribute [Route(PageUrls.SignIn)]
+
+@inject AuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h1" Class="mud-typography-h3 mb-6">Sign In</MudText>
+
+@if (returnUrl is not null)
+{
+    <MudText Color="Color.Info">You have to be Authorized to access "<b>@returnUrl.Replace("https://localhost:5001", "")</b>"</MudText>
+}
+
+<div style="width: 400px;">
+    <EditForm Model="@loginRequest" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Email" Class="mt-3"
+                              @bind-Value="loginRequest.Email" />
+                @*<ValidationMessage For="() => loginRequest.Email" />*@
+
+                <MudTextField Label="Password" Class="my-3"
+                                @bind-Value="loginRequest.Password" InputType="InputType.Password" />
+                @*<ValidationMessage For="() => loginRequest.Password" />*@
+
+                <div class="d-inline-flex w-100 justify-space-between">
+                    <MudCheckBox Label="Remember me" Color="Color.Primary"
+                              @bind-Checked="loginRequest.RememberMe" />
+
+                    <MudLink Href="@PageUrls.ForgotPassword" Class="mt-3">Forgot Password?</MudLink>
+                </div>
+            </MudCardContent>
+
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mx-3" FullWidth="true" Disabled="buttonDisabled">
+                    Sign In
+                </MudButton>
+            </MudCardActions>
+
+            <MudText Align="Align.Center" Class="py-3">
+                Don't have an account? <MudLink Href="@PageUrls.Register">Register</MudLink>
+            </MudText>
+        </MudCard>
+
+        @if (!success && errorMessage is not null)
+        {
+            <MudText Color="@Color.Error">
+                @errorMessage
+            </MudText>
+        }
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter]
+    private AuthLayout authLayout { get; set; }
+
+    private LoginRequest loginRequest;
+    private string returnUrl;
+    private string errorMessage;
+    private bool buttonDisabled;
+    private bool success;
+
+    protected override void OnInitialized()
+    {
+        authLayout.AuthButton = (@<MudButton Variant="Variant.Outlined" Class="ml-3" Color="Color.Secondary" OnClick="() => NavigationManager.NavigateTo(PageUrls.Register)">Sign Up</MudButton>);
+
+        loginRequest = new LoginRequest();
+
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrls))
+            returnUrl = returnUrls.First();
+    }
+
+    private async void OnValidSubmit()
+    {
+        buttonDisabled = true;
+
+        IResult registerResult = await AuthStateProvider.LoginAsync(loginRequest);
+        success = registerResult.Succeeded;
+        
+        if (!registerResult.Succeeded)
+            errorMessage = string.Join('\n', registerResult.Messages);
+        else
+            NavigationManager.NavigateTo(returnUrl ?? PageUrls.Home);
+
+        buttonDisabled = false;
+        this.StateHasChanged();
+    }
+}

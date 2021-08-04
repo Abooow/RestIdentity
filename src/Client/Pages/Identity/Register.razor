@@ -1,8 +1,12 @@
-﻿@page "/register"
+﻿@attribute [Route(PageUrls.Register)]
 
-@inject IAuthenticationFacade authenticationFacade
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
 
-<div style="max-width: 400px;">
+<MudText Typo="Typo.h1" Class="mud-typography-h3 mb-6">Register</MudText>
+
+<div style="width: 400px;">
     <EditForm Model="@registerRequset" OnValidSubmit="OnValidSubmit">
         <DataAnnotationsValidator />
 
@@ -10,54 +14,74 @@
             <MudCardContent>
                 <MudTextField Label="Email" Class="mt-3"
                               @bind-Value="registerRequset.Email" />
+                @*<ValidationMessage For="() => registerRequset.Email" />*@
 
                 <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
                               @bind-Value="registerRequset.Password" InputType="InputType.Password" />
-                              
+                @*<ValidationMessage For="() => registerRequset.Password" />*@
+
                 <MudTextField Label="Confirm Password" HelperText="Repeat the password" Class="mt-3"
                               @bind-Value="registerRequset.PasswordConfirm" InputType="InputType.Password" />
-                              
-                <MudCheckBox Label="Agree Terms" Class="mt-3" Color="Color.Primary"
-                              @bind-Checked="registerRequset.AgreeTerms" />
+                @*<ValidationMessage For="() => registerRequset.PasswordConfirm" />*@
+
+                <MudCheckBox Class="mt-3" Color="Color.Primary"
+                              @bind-Checked="registerRequset.AgreeTerms" >
+                    <MudText>I agree to the <MudLink Href="@PageUrls.Terms">Terms</MudLink> and <MudLink Href="@PageUrls.Terms">Conditions</MudLink> </MudText>
+                </MudCheckBox>
+                @*<ValidationMessage For="() => registerRequset.AgreeTerms" />*@
             </MudCardContent>
 
             <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mx-3" FullWidth="true" Disabled="buttonDisabled">
+                    Register
+                </MudButton>
             </MudCardActions>
+
+            <MudText Align="Align.Center" Class="py-3">
+                Already have an account? <MudLink Href="@PageUrls.SignIn">Sign In</MudLink>
+            </MudText>
         </MudCard>
 
-        <MudText Typo="Typo.body2" Align="Align.Center" Class="my-4">
-            Fill out the form correctly to see the success message.
-        </MudText>
-
-        <MudExpansionPanels>
-            <MudExpansionPanel Text="Show Validation Summary">
-                @if (success)
-                {
-                    <MudText Color="Color.Success">Success</MudText>
-                }
-                else
-                {
-                    <MudText Color="@Color.Error">
-                        <ValidationSummary />
-                    </MudText>
-                }
-            </MudExpansionPanel>
-        </MudExpansionPanels>
+        @if (!success && message is not null)
+        {
+            <MudText Color="@Color.Error">
+                @message
+            </MudText>
+        }
     </EditForm>
 </div>
 
 @code {
+    [CascadingParameter]
+    private AuthLayout authLayout { get; set; }
+
     private RegisterRequest registerRequset;
+    private bool buttonDisabled;
+    private string message;
     private bool success;
 
     protected override void OnInitialized()
     {
+        authLayout.AuthButton = (@<MudButton Variant="Variant.Outlined" Class="ml-3" Color="Color.Secondary" OnClick="() => NavigationManager.NavigateTo(PageUrls.SignIn)">Sign In</MudButton>);
+
         registerRequset = new RegisterRequest();
     }
 
-    private void OnValidSubmit()
+    private async void OnValidSubmit()
     {
-        Console.WriteLine("Success!");
+        buttonDisabled = true;
+
+        IResult registerResult = await AuthStateProvider.RegisterAsync(registerRequset);
+        
+        success = registerResult.Succeeded;
+        message = string.Join('\n', registerResult.Messages);
+        if (registerResult.Succeeded)
+        {
+            Snackbar.Add(message, Severity.Success);
+            NavigationManager.NavigateTo(PageUrls.SignIn);
+        }
+
+        buttonDisabled = false;
+        this.StateHasChanged();
     }
 }

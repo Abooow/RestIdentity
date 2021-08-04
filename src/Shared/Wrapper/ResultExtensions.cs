@@ -19,5 +19,10 @@ namespace RestIdentity.Shared.Wrapper
         {
             return result.WithStatusCode(HttpStatusCode.NotFound);
         }
+
+        public static IResult AsUnauthorized(this IResult result)
+        {
+            return result.WithStatusCode(HttpStatusCode.Unauthorized);
+        }
     }
 }

@@ -1,0 +1,29 @@
+﻿@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <div>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="() => NavigationManager.NavigateTo(PageUrls.SignOut)">
+                        Sign Out
+            </MudButton>
+        </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <div> 
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mr-2"
+                       OnClick="() => NavigationManager.NavigateTo(PageUrls.SignIn)">
+                        Sign In
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                       OnClick="() => NavigationManager.NavigateTo(PageUrls.Register)">
+                        Sign Up
+            </MudButton>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+}

@@ -1,0 +1,16 @@
+﻿@attribute [Route(PageUrls.SignOut)]
+
+@inject AuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine(AuthStateProvider.AuthenticationStateUser.Identity.IsAuthenticated);
+
+        if (AuthStateProvider.AuthenticationStateUser.Identity.IsAuthenticated)
+            await AuthStateProvider.MarkUserAsLoggedOut();
+
+        NavigationManager.NavigateTo(PageUrls.Home);
+    }
+}

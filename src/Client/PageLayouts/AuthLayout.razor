@@ -1,0 +1,22 @@
+﻿@inherits LayoutComponentBase
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <a href="@PageUrls.Home">
+            <MudText Typo="Typo.h5" Class="ml-3">RestIdentity</MudText>
+        </a>
+        <MudSpacer />
+        <ThemeButton Class="mr-3" />
+        @AuthButton
+    </MudAppBar>
+
+    <MudMainContent Class=center>
+        <CascadingValue Value="this">
+            @Body
+        </CascadingValue>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    public RenderFragment AuthButton { get; set; }
+}

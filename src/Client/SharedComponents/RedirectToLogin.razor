@@ -1,0 +1,9 @@
+﻿@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        string returnurl = Uri.EscapeDataString(NavigationManager.Uri);
+        NavigationManager.NavigateTo($"{PageUrls.SignIn}?returnUrl={returnurl}");
+    }
+}

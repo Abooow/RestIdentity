@@ -40,5 +40,15 @@ namespace RestIdentity.Client.ColorThemes
         {
             Theme = Themes.LightTheme;
         }
+
+        public bool IsDarkTheme()
+        {
+            return Theme == Themes.DarkTheme;
+        }
+
+        public bool IsLightTheme()
+        {
+            return Theme == Themes.LightTheme;
+        }
     }
 }

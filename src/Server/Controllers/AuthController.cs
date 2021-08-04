@@ -1,16 +1,25 @@
-﻿using RestIdentity.Server.Models;
-using RestIdentity.Shared.Models;
-using RestIdentity.Shared.Models.Requests;
+﻿using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Wrapper;
+using RestIdentity.Shared.Models.Requests;
+using RestIdentity.Shared.Models.Response;
+using RestIdentity.Server.Models;
 using RestIdentity.Server.Services.EmailSenders;
-using Microsoft.AspNetCore.Identity;
+using RestIdentity.Server.Services.Jwt;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Linq;
+using System.Data;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using System.Text.Encodings.Web;
-using Identity = Microsoft.AspNetCore.Identity;
+
 using Wrapper = RestIdentity.Shared.Wrapper;
+using Identity = Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.IdentityModel.Tokens;
+using RestIdentity.Client.Infrastructure;
 
 namespace RestIdentity.Server.Controllers
 {
@@ -20,15 +29,28 @@ namespace RestIdentity.Server.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IEmailSender _emailSender;
         private readonly UrlEncoder _urlEncoder;
+        private readonly IEmailSender _emailSender;
+        private readonly IJwtManager _jwtManager;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IEmailSender emailSender, UrlEncoder urlEncoder)
+        public AuthController(UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            UrlEncoder urlEncoder,
+            IEmailSender emailSender,
+            IJwtManager jwtManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _urlEncoder = urlEncoder;
+            _jwtManager = jwtManager;
+        }
+
+        [Authorize]
+        [HttpGet("getData")]
+        public async Task<IActionResult> GetData()
+        {
+            return Ok(Enumerable.Range(1, 10));
         }
 
         [Authorize]
@@ -37,24 +59,22 @@ namespace RestIdentity.Server.Controllers
         {
             Result<CurrentUser> resultUser = await Result<CurrentUser>.SuccessAsync(new CurrentUser
             {
-                IsAuthenticated = User.Identity.IsAuthenticated,
                 Email = User.Identity.Name,
-                Claims = User.Claims
-                .ToDictionary(c => c.Type, c => c.Value)
+                Claims = User.Claims.ToDictionary(c => c.Type, c => c.Value)
             });
             return Ok(resultUser);
         }
-
+        
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest parameters)
+        public async Task<IActionResult> Register(RegisterRequest registerRequest)
         {
             ApplicationUser user = new ApplicationUser
             {
-                UserName = parameters.Email,
-                Email = parameters.Email
+                UserName = registerRequest.Email,
+                Email = registerRequest.Email
             };
-            IdentityResult result = await _userManager.CreateAsync(user, parameters.Password);
+            IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
             
             if (!result.Succeeded)
                 return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
@@ -66,10 +86,11 @@ namespace RestIdentity.Server.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequest loginRequest)
         {
-            Identity::SignInResult singInResult = await _signInManager.PasswordSignInAsync(request.Email, request.Password, request.RememberMe, false);
-            
+            ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email.ToUpperInvariant());
+            Identity::SignInResult singInResult = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
+
             if (singInResult.IsNotAllowed)
                 return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest());
 
@@ -79,15 +100,46 @@ namespace RestIdentity.Server.Controllers
             if (!singInResult.Succeeded)
                 return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest());
 
-            return Ok(Result.Success());
+            Claim[] claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, loginRequest.Email),
+                new Claim(ClaimTypes.Name, loginRequest.Email),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            TokenResponse tokenResponse = _jwtManager.GenerateToken(user.NormalizedEmail, claims, DateTime.Now);
+            return Ok(Result<TokenResponse>.Success(tokenResponse));
         }
 
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.SignOutAsync();
-            return Ok(Result.Success());
+            string email = User.Identity.Name;
+            _jwtManager.RemoveRefreshTokenByTrackerIdentifier(email);
+
+            return Ok(await Result.SuccessAsync());
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refreshToken")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequest refreshTokenRequest)
+        {
+            try
+            {
+                string email = User.Identity?.Name;
+
+                if (string.IsNullOrWhiteSpace(refreshTokenRequest.RefreshToken))
+                    return Unauthorized(Result.Fail().AsUnauthorized());
+
+                TokenResponse jwtResult = _jwtManager.Refresh(refreshTokenRequest.RefreshToken, refreshTokenRequest.Token, DateTime.Now);
+                
+                return Ok(Result<TokenResponse>.Success(jwtResult));
+            }
+            catch (SecurityTokenException)
+            {
+                return Unauthorized(Result.Fail().AsUnauthorized());
+            }
         }
 
         [AllowAnonymous]

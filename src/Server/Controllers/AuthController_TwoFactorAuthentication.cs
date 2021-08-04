@@ -3,13 +3,13 @@ using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Wrapper;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Identity = Microsoft.AspNetCore.Identity;
 
 namespace RestIdentity.Server.Controllers

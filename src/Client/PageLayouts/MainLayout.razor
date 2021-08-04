@@ -1,0 +1,17 @@
+﻿@inherits LayoutComponentBase
+
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <a href="@PageUrls.Home">
+            <MudText Typo="Typo.h5" Class="ml-3">RestIdentity</MudText>
+        </a>
+        <MudSpacer />
+        <ThemeButton Class="mr-3" />
+        <AuthButtons />
+    </MudAppBar>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>

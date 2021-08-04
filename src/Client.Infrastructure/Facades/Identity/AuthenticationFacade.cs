@@ -1,6 +1,7 @@
 ﻿using RestIdentity.Client.Infrastructure.Extensions;
 using RestIdentity.Client.Infrastructure.Routes;
 using RestIdentity.Shared.Models.Requests;
+using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -17,27 +18,33 @@ namespace RestIdentity.Client.Infrastructure.Facades.Identity
             this.httpClient = httpClient;
         }
 
-        public async Task<IResult> LoginAsync(LoginRequest loginRequest)
+        public async Task<IResult<TokenResponse>> LoginAsync(LoginRequest loginRequest)
         {
             HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.Login, loginRequest)!;
-            return await response.ToResult();
+            return await response.ToResult<TokenResponse>();
         }
 
         public async Task<IResult> LoginWith2faAsync(LoginWith2faRequest loginWith2faRequest)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.LoginWith2faAsync, loginWith2faRequest)!;
+            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.LoginWith2fa, loginWith2faRequest)!;
             return await response.ToResult();
         }
 
         public async Task<IResult> LoginWithRecoveryCodeAsync(LoginWithRecoveryCodeRequest loginWithRecoveryCodeRequest)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.LoginWithRecoveryCodeAsync, loginWithRecoveryCodeRequest)!;
+            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.LoginWithRecoveryCode, loginWithRecoveryCodeRequest)!;
             return await response.ToResult();
+        }
+
+        public async Task<IResult<TokenResponse>> RefreshToken(RefreshTokenRequest refreshTokenRequest)
+        {
+            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.RefreshToken, refreshTokenRequest)!;
+            return await response.ToResult<TokenResponse>();
         }
 
         public async Task<IResult> LogoutAsync()
         {
-            HttpResponseMessage response = await httpClient.PostAsync(AuthenticationEndpoints.LogoutAsync, null);
+            HttpResponseMessage response = await httpClient.PostAsync(AuthenticationEndpoints.Logout, null);
             return await response.ToResult();
         }
     }

@@ -3,8 +3,9 @@
     public static class AuthenticationEndpoints
     {
         public static readonly string Login = "api/auth/login";
-        public static readonly string LoginWith2faAsync = "api/auth/loginWithTwoFactor";
-        public static readonly string LoginWithRecoveryCodeAsync = "api/auth/loginWithRecoveryCode";
-        public static readonly string LogoutAsync = "api/auth/logout";
+        public static readonly string LoginWith2fa = "api/auth/loginWithTwoFactor";
+        public static readonly string LoginWithRecoveryCode = "api/auth/loginWithRecoveryCode";
+        public static readonly string RefreshToken = "api/auth/refreshToken";
+        public static readonly string Logout = "api/auth/logout";
     }
 }

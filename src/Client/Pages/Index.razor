@@ -1,15 +1,7 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+@inject NavigationManager NavigationManager
 
-<MudButton OnClick="ChangeTheme" Variant="Variant.Filled" Color="Color.Primary">Toggle Dark/Light Mode</MudButton>
+<MudText Typo="Typo.h1" Class="mud-typography-h3">Hello, world! :)</MudText>
 
-@code {
-    [CascadingParameter]
-    private ThemeProvider themeProvider { get; set; }
-
-    private void ChangeTheme()
-    {
-        themeProvider.InvertTheme();
-    }
-}
+<MudText Typo="Typo.subtitle1">Welcome to RestIdentity!</MudText>
