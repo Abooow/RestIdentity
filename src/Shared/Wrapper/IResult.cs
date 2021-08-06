@@ -7,6 +7,7 @@ namespace RestIdentity.Shared.Wrapper
     {
         bool Succeeded { get; set; }
         HttpStatusCode StatusCode { get; set; }
+        string StatusCodeDescription { get; set; }
         IEnumerable<string> Messages { get; set; }
     }
 

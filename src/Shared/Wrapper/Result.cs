@@ -9,13 +9,16 @@ namespace RestIdentity.Shared.Wrapper
     {
         public Result()
         {
-            Messages = Array.Empty<string>();
             StatusCode = HttpStatusCode.OK;
+            StatusCodeDescription = StatusCodeDescriptions.None;
+            Messages = Array.Empty<string>();
         }
 
         public bool Succeeded { get; set; }
 
         public HttpStatusCode StatusCode { get; set; }
+
+        public string StatusCodeDescription { get; set; }
 
         public IEnumerable<string> Messages { get; set; }
 

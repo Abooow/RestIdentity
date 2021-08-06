@@ -24,5 +24,11 @@ namespace RestIdentity.Shared.Wrapper
         {
             return result.WithStatusCode(HttpStatusCode.Unauthorized);
         }
+
+        public static IResult WithDescription(this IResult result, string description)
+        {
+            result.StatusCodeDescription = description;
+            return result;
+        }
     }
 }

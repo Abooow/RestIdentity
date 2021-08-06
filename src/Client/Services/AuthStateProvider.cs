@@ -73,7 +73,7 @@ namespace RestIdentity.Client.Services
         {
             IResult<TokenResponse> loginResult = await _authenticationFacade.LoginAsync(loginRequest);
 
-            if (!loginResult.Succeeded)
+            if (!loginResult.Succeeded || loginResult.StatusCodeDescription == StatusCodeDescriptions.RequiresTwoFactor)
                 return loginResult;
 
             _localStorage.SetItem(TokenName, loginResult.Data.Token);

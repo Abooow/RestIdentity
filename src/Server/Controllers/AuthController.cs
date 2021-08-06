@@ -20,6 +20,7 @@ using Identity = Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Client.Infrastructure;
+using System.Net;
 
 namespace RestIdentity.Server.Controllers
 {
@@ -44,13 +45,6 @@ namespace RestIdentity.Server.Controllers
             _emailSender = emailSender;
             _urlEncoder = urlEncoder;
             _jwtManager = jwtManager;
-        }
-
-        [Authorize]
-        [HttpGet("getData")]
-        public async Task<IActionResult> GetData()
-        {
-            return Ok(Enumerable.Range(1, 10));
         }
 
         [Authorize]
@@ -89,16 +83,19 @@ namespace RestIdentity.Server.Controllers
         public async Task<IActionResult> Login(LoginRequest loginRequest)
         {
             ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email.ToUpperInvariant());
+            if (user is null)
+                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
+
             Identity::SignInResult singInResult = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
 
-            if (singInResult.IsNotAllowed)
-                return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest());
-
-            if (singInResult.RequiresTwoFactor)
-                return Ok(Wrapper::RedirectResult.RedirectTo(Url.RouteUrl("loginWithTwoFactor")));
-
             if (!singInResult.Succeeded)
-                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest());
+                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
+            
+            if (singInResult.IsNotAllowed)
+                return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest().WithDescription(StatusCodeDescriptions.RequiresConfirmEmail));
+            
+            if (user.TwoFactorEnabled)
+                return Ok(Result.Success("Two factor authentication needed.").WithDescription(StatusCodeDescriptions.RequiresTwoFactor));
 
             Claim[] claims = new[]
             {

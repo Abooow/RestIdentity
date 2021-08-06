@@ -64,7 +64,7 @@
 
     protected override void OnInitialized()
     {
-        authLayout.AuthButton = (@<MudButton Variant="Variant.Outlined" Class="ml-3" Color="Color.Secondary" OnClick="() => NavigationManager.NavigateTo(PageUrls.Register)">Sign Up</MudButton>);
+        authLayout.AuthButton = (@<MudButton Variant="Variant.Outlined" Class="ml-3" Color="Color.Secondary" OnClick="() => NavigationManager.NavigateTo(PageUrls.Register)">Sign Up</MudButton> );
 
         loginRequest = new LoginRequest();
 
@@ -83,9 +83,21 @@
         if (!registerResult.Succeeded)
             errorMessage = string.Join('\n', registerResult.Messages);
         else
-            NavigationManager.NavigateTo(returnUrl ?? PageUrls.Home);
+            NavigationManager.NavigateTo(GetNavigationUrl(registerResult.StatusCodeDescription, returnUrl));        
 
         buttonDisabled = false;
         this.StateHasChanged();
+    }
+
+    private static string GetNavigationUrl(string statusCodeDescription, string returnUrl)
+    {
+        string navigationUrl = (statusCodeDescription, returnUrl) switch
+        {
+            (StatusCodeDescriptions.RequiresTwoFactor, null) => PageUrls.TwoFactorSignIn,
+            (StatusCodeDescriptions.RequiresTwoFactor, { }) => $"{PageUrls.TwoFactorSignIn}?returnUrl={returnUrl}",
+            _ => returnUrl ?? PageUrls.Home
+        };
+
+        return navigationUrl;
     }
 }
