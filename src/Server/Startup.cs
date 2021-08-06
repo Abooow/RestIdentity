@@ -1,7 +1,6 @@
 using RestIdentity.Shared.Wrapper;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Services.EmailSenders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
@@ -46,8 +45,6 @@ namespace RestIdentity.Server
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
             
-            services.AddJwtAuthentication(Configuration);
-
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.HttpOnly = false;
