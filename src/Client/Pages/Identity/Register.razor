@@ -4,13 +4,13 @@
 @inject AuthStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 
-<MudText Typo="Typo.h1" Class="mud-typography-h3 mb-6">Register</MudText>
-
 <div style="width: 400px;">
     <EditForm Model="@registerRequset" OnValidSubmit="OnValidSubmit">
         <DataAnnotationsValidator />
 
-       <MudCard>
+        <MudCard>
+            <MudText Typo="Typo.h1" Class="mud-typography-h3 mb-3 pt-8" Align="Align.Center">Register</MudText>
+
             <MudCardContent>
                 <MudTextField Label="Email" Class="mt-3"
                               @bind-Value="registerRequset.Email" />
@@ -42,10 +42,10 @@
             </MudText>
         </MudCard>
 
-        @if (!success && message is not null)
+        @if (!success && errorMessage is not null)
         {
             <MudText Color="@Color.Error">
-                @message
+                @errorMessage
             </MudText>
         }
     </EditForm>
@@ -57,7 +57,7 @@
 
     private RegisterRequest registerRequset;
     private bool buttonDisabled;
-    private string message;
+    private string errorMessage;
     private bool success;
 
     protected override void OnInitialized()
@@ -74,10 +74,10 @@
         IResult registerResult = await AuthStateProvider.RegisterAsync(registerRequset);
         
         success = registerResult.Succeeded;
-        message = string.Join('\n', registerResult.Messages);
+        errorMessage = string.Join('\n', registerResult.Messages);
         if (registerResult.Succeeded)
         {
-            Snackbar.Add(message, Severity.Success);
+            Snackbar.Add(errorMessage, Severity.Success);
             NavigationManager.NavigateTo(PageUrls.SignIn);
         }
 

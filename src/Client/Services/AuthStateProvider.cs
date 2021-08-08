@@ -37,7 +37,7 @@ namespace RestIdentity.Client.Services
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            string token = GetLocalStorageAuthToken();
+            string token = "";
             if (string.IsNullOrWhiteSpace(token))
             {
                 ClaimsPrincipal anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
@@ -46,8 +46,6 @@ namespace RestIdentity.Client.Services
                 return new AuthenticationState(anonymousUser);
             }
             
-            MarkUserAsAuthenticated(token);
-
             return new AuthenticationState(AuthenticationStateUser);
         }
 
@@ -71,15 +69,14 @@ namespace RestIdentity.Client.Services
 
         public async Task<IResult> LoginAsync(LoginRequest loginRequest)
         {
-            IResult<TokenResponse> loginResult = await _authenticationFacade.LoginAsync(loginRequest);
+            IResult loginResult = await _authenticationFacade.LoginAsync(loginRequest);
 
             if (!loginResult.Succeeded)
                 return loginResult;
 
-            _localStorage.SetItem(TokenName, loginResult.Data.Token);
-            _localStorage.SetItem(RefreshTokenName, loginResult.Data.RefreshToken.Token);
+            var userClaims = (await _userFacade.GetMeAsync()).Data.Claims.Select(x => new Claim(x.Key, x.Value));
+            AuthenticationStateUser = new ClaimsPrincipal(new ClaimsIdentity(userClaims));
 
-            MarkUserAsAuthenticated(loginResult.Data.Token);
             NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
 
             return loginResult;
@@ -90,65 +87,6 @@ namespace RestIdentity.Client.Services
             IResult registerResult = await _userFacade.RegisterUserAsync(registerRequest);
 
             return registerResult;
-        }
-
-        private string GetLocalStorageAuthToken()
-        {
-            return _localStorage.GetItem(TokenName);
-        }
-
-        private void MarkUserAsAuthenticated(string token)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            Console.WriteLine("wow");
-            Console.WriteLine(token);
-            Console.WriteLine(_httpClient.DefaultRequestHeaders.Authorization);
-
-            AuthenticationStateUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
-        }
-
-        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
-        {
-            List<Claim> claims = new List<Claim>();
-            string payload = jwt.Split('.')[1];
-            byte[] jsonBytes = ParseBase64WithoutPadding(payload);
-            Dictionary<string, object> keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
-
-            keyValuePairs.TryGetValue(ClaimTypes.Role, out object roles);
-
-            if (roles != null)
-            {
-                if (roles.ToString().Trim().StartsWith("["))
-                {
-                    string[] parsedRoles = JsonSerializer.Deserialize<string[]>(roles.ToString());
-
-                    foreach (string parsedRole in parsedRoles)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, parsedRole));
-                    }
-                }
-                else
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, roles.ToString()));
-                }
-
-                keyValuePairs.Remove(ClaimTypes.Role);
-            }
-
-            claims.AddRange(keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString())));
-
-            return claims;
-        }
-
-        private byte[] ParseBase64WithoutPadding(string base64)
-        {
-            switch (base64.Length % 4)
-            {
-                case 2: base64 += "=="; break;
-                case 3: base64 += "="; break;
-            }
-
-            return Convert.FromBase64String(base64);
         }
     }
 }

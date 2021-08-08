@@ -6,6 +6,7 @@
 
         private const string Auth = "/auth";
         public const string SignIn = Auth + "/signin";
+        public const string TwoFactorSignIn = Auth + "/two-factor";
         public const string SignOut = Auth + "/signout";
         public const string Register = Auth + "/register";
         public const string Profile = Auth + "/profile";

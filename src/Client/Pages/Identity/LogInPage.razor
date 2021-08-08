@@ -3,8 +3,6 @@
 @inject AuthStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 
-<MudText Typo="Typo.h1" Class="mud-typography-h3 mb-6">Sign In</MudText>
-
 @if (returnUrl is not null)
 {
     <MudText Color="Color.Info">You have to be Authorized to access "<b>@returnUrl.Replace("https://localhost:5001", "")</b>"</MudText>
@@ -15,6 +13,8 @@
         <DataAnnotationsValidator />
 
         <MudCard>
+            <MudText Typo="Typo.h1" Class="mud-typography-h3 mb-3 pt-8" Align="Align.Center">Sign In</MudText>
+
             <MudCardContent>
                 <MudTextField Label="Email" Class="mt-3"
                               @bind-Value="loginRequest.Email" />

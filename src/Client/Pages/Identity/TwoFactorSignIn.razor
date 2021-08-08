@@ -1,0 +1,59 @@
+﻿@attribute [Route(PageUrls.TwoFactorSignIn)]
+
+@inject AuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<div style="width: 400px;">
+    <EditForm Model="@loginWith2faRequest" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+
+        <MudCard>
+            <MudText Typo="Typo.h1" Class="mud-typography-h4 px-3 mb-3 pt-8" Align="Align.Center">Two-factor authentication</MudText>
+
+            <MudCardContent>
+                <MudTextField Label="Authentication code" Class="mt-3"
+                              @bind-Value="loginWith2faRequest.TwoFactorCode" />
+                @*<ValidationMessage For="() => registerRequset.Email" />*@
+            </MudCardContent>
+
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mx-3" FullWidth="true" Disabled="buttonDisabled">
+                    Verify
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+
+        @if (!success && errorMessage is not null)
+        {
+            <MudText Color="@Color.Error">
+                @errorMessage
+            </MudText>
+        }
+    </EditForm>
+</div>
+
+@code {
+    private LoginWith2faRequest loginWith2faRequest;
+
+    private string returnUrl;
+    private string errorMessage;
+    private bool buttonDisabled;
+    private bool success;
+
+    protected override void OnInitialized()
+    {
+        loginWith2faRequest = new LoginWith2faRequest();
+
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrls))
+            returnUrl = returnUrls.First();
+    }
+
+    private async void OnValidSubmit()
+    {
+        buttonDisabled = true;
+       
+        buttonDisabled = false;
+        this.StateHasChanged();
+    }
+}

@@ -1,7 +1,6 @@
 ﻿using RestIdentity.Client.Infrastructure.Extensions;
 using RestIdentity.Client.Infrastructure.Routes;
 using RestIdentity.Shared.Models.Requests;
-using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -18,10 +17,10 @@ namespace RestIdentity.Client.Infrastructure.Facades.Identity
             this.httpClient = httpClient;
         }
 
-        public async Task<IResult<TokenResponse>> LoginAsync(LoginRequest loginRequest)
+        public async Task<IResult> LoginAsync(LoginRequest loginRequest)
         {
             HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.Login, loginRequest)!;
-            return await response.ToResult<TokenResponse>();
+            return await response.ToResult();
         }
 
         public async Task<IResult> LoginWith2faAsync(LoginWith2faRequest loginWith2faRequest)
@@ -34,12 +33,6 @@ namespace RestIdentity.Client.Infrastructure.Facades.Identity
         {
             HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.LoginWithRecoveryCode, loginWithRecoveryCodeRequest)!;
             return await response.ToResult();
-        }
-
-        public async Task<IResult<TokenResponse>> RefreshToken(RefreshTokenRequest refreshTokenRequest)
-        {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync(AuthenticationEndpoints.RefreshToken, refreshTokenRequest)!;
-            return await response.ToResult<TokenResponse>();
         }
 
         public async Task<IResult> LogoutAsync()
