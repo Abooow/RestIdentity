@@ -4,7 +4,6 @@ using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Services.EmailSenders;
-using RestIdentity.Server.Services.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +19,7 @@ using Identity = Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Client.Infrastructure;
+using System.Net;
 
 namespace RestIdentity.Server.Controllers
 {
@@ -31,26 +31,16 @@ namespace RestIdentity.Server.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UrlEncoder _urlEncoder;
         private readonly IEmailSender _emailSender;
-        private readonly IJwtManager _jwtManager;
 
         public AuthController(UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             UrlEncoder urlEncoder,
-            IEmailSender emailSender,
-            IJwtManager jwtManager)
+            IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _urlEncoder = urlEncoder;
-            _jwtManager = jwtManager;
-        }
-
-        [Authorize]
-        [HttpGet("getData")]
-        public async Task<IActionResult> GetData()
-        {
-            return Ok(Enumerable.Range(1, 10));
         }
 
         [Authorize]
@@ -88,58 +78,26 @@ namespace RestIdentity.Server.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest loginRequest)
         {
-            ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email.ToUpperInvariant());
-            Identity::SignInResult singInResult = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
+            Identity::SignInResult singInResult = await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, false);
 
             if (singInResult.IsNotAllowed)
-                return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest());
+                return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest().WithDescription(StatusCodeDescriptions.RequiresConfirmEmail));
 
             if (singInResult.RequiresTwoFactor)
-                return Ok(Wrapper::RedirectResult.RedirectTo(Url.RouteUrl("loginWithTwoFactor")));
+                return Ok(Result.Success("Two factor authentication needed.").WithDescription(StatusCodeDescriptions.RequiresTwoFactor));
 
             if (!singInResult.Succeeded)
-                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest());
+                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
 
-            Claim[] claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, loginRequest.Email),
-                new Claim(ClaimTypes.Name, loginRequest.Email),
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            TokenResponse tokenResponse = _jwtManager.GenerateToken(user.NormalizedEmail, claims, DateTime.Now);
-            return Ok(Result<TokenResponse>.Success(tokenResponse));
+            return Ok(Result.Success());
         }
 
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            string email = User.Identity.Name;
-            _jwtManager.RemoveRefreshTokenByTrackerIdentifier(email);
-
-            return Ok(await Result.SuccessAsync());
-        }
-
-        [AllowAnonymous]
-        [HttpPost("refreshToken")]
-        public async Task<IActionResult> RefreshToken(RefreshTokenRequest refreshTokenRequest)
-        {
-            try
-            {
-                string email = User.Identity?.Name;
-
-                if (string.IsNullOrWhiteSpace(refreshTokenRequest.RefreshToken))
-                    return Unauthorized(Result.Fail().AsUnauthorized());
-
-                TokenResponse jwtResult = _jwtManager.Refresh(refreshTokenRequest.RefreshToken, refreshTokenRequest.Token, DateTime.Now);
-                
-                return Ok(Result<TokenResponse>.Success(jwtResult));
-            }
-            catch (SecurityTokenException)
-            {
-                return Unauthorized(Result.Fail().AsUnauthorized());
-            }
+            await _signInManager.SignOutAsync();
+            return Ok(Result.Success());
         }
 
         [AllowAnonymous]

@@ -71,7 +71,7 @@ namespace RestIdentity.Client.Services
         {
             IResult loginResult = await _authenticationFacade.LoginAsync(loginRequest);
 
-            if (!loginResult.Succeeded)
+            if (!loginResult.Succeeded || loginResult.StatusCodeDescription == StatusCodeDescriptions.RequiresTwoFactor)
                 return loginResult;
 
             var userClaims = (await _userFacade.GetMeAsync()).Data.Claims.Select(x => new Claim(x.Key, x.Value));
