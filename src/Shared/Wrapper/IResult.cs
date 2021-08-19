@@ -1,23 +1,21 @@
-﻿using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 
-namespace RestIdentity.Shared.Wrapper
+namespace RestIdentity.Shared.Wrapper;
+
+public interface IResult
 {
-    public interface IResult
-    {
-        bool Succeeded { get; set; }
-        HttpStatusCode StatusCode { get; set; }
-        string StatusCodeDescription { get; set; }
-        IEnumerable<string> Messages { get; set; }
-    }
+    bool Succeeded { get; set; }
+    HttpStatusCode StatusCode { get; set; }
+    string StatusCodeDescription { get; set; }
+    IEnumerable<string> Messages { get; set; }
+}
 
-    public interface IResult<out T> : IResult
-    {
-        T Data { get; }
-    }
+public interface IResult<out T> : IResult
+{
+    T Data { get; }
+}
 
-    public interface IRedirectResult : IResult
-    {
-        string Url { get; }
-    }
+public interface IRedirectResult : IResult
+{
+    string Url { get; }
 }

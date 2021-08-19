@@ -11,7 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Shared", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Client.Infrastructure", "src\Client.Infrastructure\RestIdentity.Client.Infrastructure.csproj", "{A5A471FF-F40D-4EFA-A323-BF6294DD5D32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestIdentity.Logging", "RestIdentity.Logging\RestIdentity.Logging.csproj", "{45090CD0-78C9-438E-BBA8-89802EF9AC82}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestIdentity.Logging", "RestIdentity.Logging\RestIdentity.Logging.csproj", "{45090CD0-78C9-438E-BBA8-89802EF9AC82}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A125FFA3-4FCF-4B60-AF13-D83E0AF8E0B5}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

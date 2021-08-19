@@ -1,9 +1,8 @@
-﻿namespace RestIdentity.Client.Services.Storage
+﻿namespace RestIdentity.Client.Services.Storage;
+
+internal interface ILocalStorage
 {
-    internal interface ILocalStorage
-    {
-        void SetItem(string key, string value);
-        string GetItem(string key);
-        void RemoveItem(string key);
-    }
+    void SetItem(string key, string value);
+    string GetItem(string key);
+    void RemoveItem(string key);
 }

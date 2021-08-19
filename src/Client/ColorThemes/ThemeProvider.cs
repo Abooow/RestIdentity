@@ -1,54 +1,52 @@
 ﻿using MudBlazor;
-using System;
 
-namespace RestIdentity.Client.ColorThemes
+namespace RestIdentity.Client.ColorThemes;
+
+public class ThemeProvider
 {
-    public class ThemeProvider
+    public MudTheme Theme
     {
-        public MudTheme Theme 
+        get => _theme;
+        set
         {
-            get => _theme; 
-            set
-            {
-                if (value is null || value == _theme)
-                    return;
+            if (value is null || value == _theme)
+                return;
 
-                OnThemeChanged?.Invoke(value);
-                _theme = value;
-            }
+            OnThemeChanged?.Invoke(value);
+            _theme = value;
         }
-        private MudTheme _theme;
+    }
+    private MudTheme _theme;
 
-        public event Action<MudTheme> OnThemeChanged;
+    public event Action<MudTheme> OnThemeChanged;
 
-        public ThemeProvider()
-        {
-            Theme = Themes.DarkTheme;
-        }
+    public ThemeProvider()
+    {
+        Theme = Themes.DarkTheme;
+    }
 
-        public void InvertTheme()
-        {
-            Theme = Theme == Themes.DarkTheme ? Themes.LightTheme : Themes.DarkTheme;
-        }
+    public void InvertTheme()
+    {
+        Theme = Theme == Themes.DarkTheme ? Themes.LightTheme : Themes.DarkTheme;
+    }
 
-        public void DarkTheme()
-        {
-            Theme = Themes.DarkTheme;
-        }
+    public void DarkTheme()
+    {
+        Theme = Themes.DarkTheme;
+    }
 
-        public void LightTheme()
-        {
-            Theme = Themes.LightTheme;
-        }
+    public void LightTheme()
+    {
+        Theme = Themes.LightTheme;
+    }
 
-        public bool IsDarkTheme()
-        {
-            return Theme == Themes.DarkTheme;
-        }
+    public bool IsDarkTheme()
+    {
+        return Theme == Themes.DarkTheme;
+    }
 
-        public bool IsLightTheme()
-        {
-            return Theme == Themes.LightTheme;
-        }
+    public bool IsLightTheme()
+    {
+        return Theme == Themes.LightTheme;
     }
 }

@@ -1,19 +1,18 @@
-﻿namespace RestIdentity.Client
+﻿namespace RestIdentity.Client;
+
+internal static class PageUrls
 {
-    internal static class PageUrls
-    {
-        public const string Home = "/";
+    public const string Home = "/";
 
-        private const string Auth = "/auth";
-        public const string SignIn = Auth + "/signin";
-        public const string TwoFactorSignIn = Auth + "/two-factor";
-        public const string SignOut = Auth + "/signout";
-        public const string Register = Auth + "/register";
-        public const string Profile = Auth + "/profile";
-        
-        public const string ForgotPassword = "/forgotpassword";
+    private const string Auth = "/auth";
+    public const string SignIn = Auth + "/signin";
+    public const string TwoFactorSignIn = Auth + "/two-factor";
+    public const string SignOut = Auth + "/signout";
+    public const string Register = Auth + "/register";
+    public const string Profile = Auth + "/profile";
 
-        public const string Terms = "/terms";
-        public const string Conditions = "/conditions";
-    }
+    public const string ForgotPassword = "/forgotpassword";
+
+    public const string Terms = "/terms";
+    public const string Conditions = "/conditions";
 }

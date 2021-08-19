@@ -1,195 +1,183 @@
-﻿using RestIdentity.Shared.Models;
-using RestIdentity.Shared.Wrapper;
-using RestIdentity.Shared.Models.Requests;
-using RestIdentity.Shared.Models.Response;
+﻿using System.Data;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Services.EmailSenders;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
-using System;
-using System.Linq;
-using System.Data;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Text.Encodings.Web;
-
-using Wrapper = RestIdentity.Shared.Wrapper;
+using RestIdentity.Shared.Models;
+using RestIdentity.Shared.Models.Requests;
+using RestIdentity.Shared.Wrapper;
 using Identity = Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.IdentityModel.Tokens;
-using RestIdentity.Client.Infrastructure;
-using System.Net;
 
-namespace RestIdentity.Server.Controllers
+namespace RestIdentity.Server.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public sealed partial class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public partial class AuthController : ControllerBase
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UrlEncoder _urlEncoder;
+    private readonly IEmailSender _emailSender;
+
+    public AuthController(UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        UrlEncoder urlEncoder,
+        IEmailSender emailSender)
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UrlEncoder _urlEncoder;
-        private readonly IEmailSender _emailSender;
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _emailSender = emailSender;
+        _urlEncoder = urlEncoder;
+    }
 
-        public AuthController(UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            UrlEncoder urlEncoder,
-            IEmailSender emailSender)
+    [Authorize]
+    [HttpGet("getMe")]
+    public async Task<IActionResult> GetMe()
+    {
+        Result<CurrentUser> resultUser = await Result<CurrentUser>.SuccessAsync(new CurrentUser
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _emailSender = emailSender;
-            _urlEncoder = urlEncoder;
-        }
+            Email = User.Identity.Name,
+            Claims = User.Claims.ToDictionary(c => c.Type, c => c.Value)
+        });
+        return Ok(resultUser);
+    }
 
-        [Authorize]
-        [HttpGet("getMe")]
-        public async Task<IActionResult> GetMe()
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterRequest registerRequest)
+    {
+        ApplicationUser user = new ApplicationUser
         {
-            Result<CurrentUser> resultUser = await Result<CurrentUser>.SuccessAsync(new CurrentUser
-            {
-                Email = User.Identity.Name,
-                Claims = User.Claims.ToDictionary(c => c.Type, c => c.Value)
-            });
-            return Ok(resultUser);
-        }
-        
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest registerRequest)
-        {
-            ApplicationUser user = new ApplicationUser
-            {
-                UserName = registerRequest.Email,
-                Email = registerRequest.Email
-            };
-            IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
-            
-            if (!result.Succeeded)
-                return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+            UserName = registerRequest.Email,
+            Email = registerRequest.Email
+        };
+        IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
 
-            await GenerateAndSendConfirmationEmail(user);
+        if (!result.Succeeded)
+            return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
 
-            return Ok(Result.Success($"User {user.Email} Registered. Please check your Mailbox to verify!"));
-        }
+        await GenerateAndSendConfirmationEmail(user);
 
-        [AllowAnonymous]
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest loginRequest)
-        {
-            Identity::SignInResult singInResult = await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, false);
+        return Ok(Result.Success($"User {user.Email} Registered. Please check your Mailbox to verify!"));
+    }
 
-            if (singInResult.IsNotAllowed)
-                return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest().WithDescription(StatusCodeDescriptions.RequiresConfirmEmail));
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest loginRequest)
+    {
+        Identity::SignInResult singInResult = await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, false);
 
-            if (singInResult.RequiresTwoFactor)
-                return Ok(Result.Success("Two factor authentication needed.").WithDescription(StatusCodeDescriptions.RequiresTwoFactor));
+        if (singInResult.IsNotAllowed)
+            return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest().WithDescription(StatusCodeDescriptions.RequiresConfirmEmail));
 
-            if (!singInResult.Succeeded)
-                return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
+        if (singInResult.RequiresTwoFactor)
+            return Ok(Result.Success("Two factor authentication needed.").WithDescription(StatusCodeDescriptions.RequiresTwoFactor));
 
-            return Ok(Result.Success());
-        }
+        if (!singInResult.Succeeded)
+            return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
 
-        [Authorize]
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            await _signInManager.SignOutAsync();
-            return Ok(Result.Success());
-        }
+        return Ok(Result.Success());
+    }
 
-        [AllowAnonymous]
-        [HttpPost("confirmEmail")]
-        public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code)
-        {
-            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(code))
-                return BadRequest(Result.Fail("User Id and Code are required.").AsBadRequest());
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return Ok(Result.Success());
+    }
 
-            ApplicationUser user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
-                return NotFound(Result.Fail("User was not found.").AsNotFound());
+    [AllowAnonymous]
+    [HttpPost("confirmEmail")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(code))
+            return BadRequest(Result.Fail("User Id and Code are required.").AsBadRequest());
 
-            if (user.EmailConfirmed)
-                return Ok(Result.Success("Account has been confirmed."));
+        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return NotFound(Result.Fail("User was not found.").AsNotFound());
 
-            IdentityResult result = await _userManager.ConfirmEmailAsync(user, code);
+        if (user.EmailConfirmed)
+            return Ok(Result.Success("Account has been confirmed."));
 
-            return result.Succeeded ? Ok(Result.Success("Account has been confirmed.")) 
-                : BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
-        }
+        IdentityResult result = await _userManager.ConfirmEmailAsync(user, code);
 
-        [AllowAnonymous]
-        [HttpPost("resendEmailConfirmation")]
-        public async Task<IActionResult> ResendEmailConfirmation(EmailAddress emailAddress)
-        {
-            ApplicationUser user = await _userManager.FindByEmailAsync(emailAddress.Email);
-            if (user is null || user.EmailConfirmed)
-                return Ok(Result.Success("Reset Password email sent. Please check your Mailbox.")); // Fake it.
+        return result.Succeeded ? Ok(Result.Success("Account has been confirmed."))
+            : BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+    }
 
-            await GenerateAndSendConfirmationEmail(user);
+    [AllowAnonymous]
+    [HttpPost("resendEmailConfirmation")]
+    public async Task<IActionResult> ResendEmailConfirmation(EmailAddress emailAddress)
+    {
+        ApplicationUser user = await _userManager.FindByEmailAsync(emailAddress.Email);
+        if (user is null || user.EmailConfirmed)
+            return Ok(Result.Success("Reset Password email sent. Please check your Mailbox.")); // Fake it.
 
-            return Ok(Result.Success("Reset Password email sent. Please check your Mailbox."));
-        }
+        await GenerateAndSendConfirmationEmail(user);
 
-        [Authorize]
-        [HttpPost("changePassword")]
-        public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest)
-        {
-            ApplicationUser user = await _userManager.GetUserAsync(User);
-            if (user is null)
-                return NotFound(Result.Fail("User was not found.").AsNotFound());
+        return Ok(Result.Success("Reset Password email sent. Please check your Mailbox."));
+    }
 
-            IdentityResult result = await _userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
-            if (!result.Succeeded)
-                return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+    [Authorize]
+    [HttpPost("changePassword")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest)
+    {
+        ApplicationUser user = await _userManager.GetUserAsync(User);
+        if (user is null)
+            return NotFound(Result.Fail("User was not found.").AsNotFound());
 
-            await _signInManager.RefreshSignInAsync(user);
-            return Ok(Result.Success("Password was successfully changed."));
-        }
+        IdentityResult result = await _userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
 
-        [AllowAnonymous]
-        [HttpPost("forgotPassword")]
-        public async Task<IActionResult> ForgotPassword(EmailAddress emailAddress)
-        {
-            ApplicationUser user = await _userManager.FindByEmailAsync(emailAddress.Email);
-            if (user is null || !await _userManager.IsEmailConfirmedAsync(user))
-                return Ok(Result.Success("Verification email sent. Please check your Mailbox.")); // Fake it.
+        await _signInManager.RefreshSignInAsync(user);
+        return Ok(Result.Success("Password was successfully changed."));
+    }
 
-            await GenerateAndSendPasswordResetEmail(user);
+    [AllowAnonymous]
+    [HttpPost("forgotPassword")]
+    public async Task<IActionResult> ForgotPassword(EmailAddress emailAddress)
+    {
+        ApplicationUser user = await _userManager.FindByEmailAsync(emailAddress.Email);
+        if (user is null || !await _userManager.IsEmailConfirmedAsync(user))
+            return Ok(Result.Success("Verification email sent. Please check your Mailbox.")); // Fake it.
 
-            return Ok(Result.Success("Verification email sent. Please check your Mailbox."));
-        }
+        await GenerateAndSendPasswordResetEmail(user);
 
-        [AllowAnonymous]
-        [HttpPost("resetPassword")]
-        public async Task<IActionResult> ResetPassword(ResetPasswordRequest resetPasswordRequest)
-        {
-            ApplicationUser user = await _userManager.FindByEmailAsync(resetPasswordRequest.Email);
-            if (user is null)
-                return Ok(Result.Success("Password has been reset.")); // Fake it.
+        return Ok(Result.Success("Verification email sent. Please check your Mailbox."));
+    }
 
-            IdentityResult result = await _userManager.ResetPasswordAsync(user, resetPasswordRequest.Code, resetPasswordRequest.Password);
+    [AllowAnonymous]
+    [HttpPost("resetPassword")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest resetPasswordRequest)
+    {
+        ApplicationUser user = await _userManager.FindByEmailAsync(resetPasswordRequest.Email);
+        if (user is null)
+            return Ok(Result.Success("Password has been reset.")); // Fake it.
 
-            return result.Succeeded ? Ok(Result.Success("Password has been reset.")) 
-                : BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
-        }
+        IdentityResult result = await _userManager.ResetPasswordAsync(user, resetPasswordRequest.Code, resetPasswordRequest.Password);
 
-        private async Task GenerateAndSendConfirmationEmail(ApplicationUser user)
-        {
-            string code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            string callbackUrl = Url.ActionLink("confirmEmail", "Auth", new { UserId = user.Id, Code = code });
+        return result.Succeeded ? Ok(Result.Success("Password has been reset."))
+            : BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+    }
 
-            await _emailSender.SendAsync(user.Email, "Confirm Your account", $"Please confirm your account by <a href='{callbackUrl}'>Clicking Here</a>");
-        }
+    private async Task GenerateAndSendConfirmationEmail(ApplicationUser user)
+    {
+        string code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        string callbackUrl = Url.ActionLink("confirmEmail", "Auth", new { UserId = user.Id, Code = code });
 
-        private async Task GenerateAndSendPasswordResetEmail(ApplicationUser user)
-        {
-            string code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            string callbackUrl = Url.ActionLink("resetPassword", "Auth", new { Area = "Identity", Code = code });
+        await _emailSender.SendAsync(user.Email, "Confirm Your account", $"Please confirm your account by <a href='{callbackUrl}'>Clicking Here</a>");
+    }
 
-            await _emailSender.SendAsync(user.Email, "Reset Password", $"Reset your password by <a href='{callbackUrl}'>Clicking Here</a>");
-        }
+    private async Task GenerateAndSendPasswordResetEmail(ApplicationUser user)
+    {
+        string code = await _userManager.GeneratePasswordResetTokenAsync(user);
+        string callbackUrl = Url.ActionLink("resetPassword", "Auth", new { Area = "Identity", Code = code });
+
+        await _emailSender.SendAsync(user.Email, "Reset Password", $"Reset your password by <a href='{callbackUrl}'>Clicking Here</a>");
     }
 }
