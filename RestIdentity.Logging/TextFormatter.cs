@@ -31,6 +31,5 @@ public sealed class TextFormatter : ITextFormatter
 
         output.WriteLine(".......................................................");
         output.WriteLine();
-
     }
 }

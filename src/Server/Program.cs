@@ -1,6 +1,6 @@
-﻿using RestIdentity.Logging;
+﻿using System.Diagnostics;
+using RestIdentity.Logging;
 using Serilog;
-using System.Diagnostics;
 
 namespace RestIdentity.Server
 {
@@ -23,6 +23,7 @@ namespace RestIdentity.Server
                     .Enrich.WithProperty("    CurrentManagedThreadId", Environment.CurrentManagedThreadId)
                     .Enrich.WithProperty("    ProcessId", Environment.ProcessId)
                     .Enrich.WithProperty("    ProcessName", Process.GetCurrentProcess().ProcessName)
+                    .WriteTo.Console(theme: ConsoleThemes.CustumDark)
                     .WriteTo.File(new TextFormatter(), Path.Combine($@"{hotstingContext.HostingEnvironment.ContentRootPath}\Logs\", $"{DateTime.Now:yyyyMMdd_HHmmss}.txt"))
                     .ReadFrom.Configuration(hotstingContext.Configuration));
 
