@@ -16,8 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\RestIdentity.Logging\RestIdentity.Logging.csproj" />
     <ProjectReference Include="..\Client\RestIdentity.Client.csproj" />
     <ProjectReference Include="..\Shared\RestIdentity.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logs\" />
   </ItemGroup>
 
 
