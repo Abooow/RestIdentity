@@ -2,8 +2,4 @@
 
 namespace RestIdentity.Shared.Models;
 
-public sealed class EmailAddress
-{
-    [EmailAddress]
-    public string Email { get; set; }
-}
+public sealed record EmailAddress([EmailAddress] string Email);

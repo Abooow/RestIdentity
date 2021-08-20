@@ -6,5 +6,5 @@ public sealed class LoginWithRecoveryCodeRequest
 {
     [Required]
     [DataType(DataType.Text)]
-    public string RecoveryCode { get; set; }
+    public string? RecoveryCode { get; set; }
 }

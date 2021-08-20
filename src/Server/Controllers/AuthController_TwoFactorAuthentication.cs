@@ -52,7 +52,7 @@ public sealed partial class AuthController
         string authenticatorUri = GenerateQrCodeUri(email, unformattedKey);
 
         return Ok(Result<TwoFactorQRCode>.Success(
-            new TwoFactorQRCode() { SharedKey = formattedKey, AuthenticatorUri = authenticatorUri },
+            new TwoFactorQRCode(formattedKey, authenticatorUri),
             "2fa has been enabled."));
     }
 
@@ -103,7 +103,7 @@ public sealed partial class AuthController
         IEnumerable<string> recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
 
         return Ok(Result<RecoveryCodes>.Success(
-            new RecoveryCodes() { Codes = recoveryCodes },
+            new RecoveryCodes(recoveryCodes),
             "Recovery codes has been generated."));
     }
 

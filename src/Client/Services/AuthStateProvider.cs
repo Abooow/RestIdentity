@@ -42,9 +42,9 @@ internal class AuthStateProvider : AuthenticationStateProvider
         return new AuthenticationState(AuthenticationStateUser);
     }
 
-    public async Task<IResult> MarkUserAsLoggedOut()
+    public async Task<Result> MarkUserAsLoggedOut()
     {
-        IResult logoutResult = await _authenticationFacade.LogoutAsync();
+        Result logoutResult = await _authenticationFacade.LogoutAsync();
 
         ClaimsPrincipal anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
         Task<AuthenticationState> authState = Task.FromResult(new AuthenticationState(anonymousUser));
@@ -60,9 +60,9 @@ internal class AuthStateProvider : AuthenticationStateProvider
         return logoutResult;
     }
 
-    public async Task<IResult> LoginAsync(LoginRequest loginRequest)
+    public async Task<Result> LoginAsync(LoginRequest loginRequest)
     {
-        IResult loginResult = await _authenticationFacade.LoginAsync(loginRequest);
+        Result loginResult = await _authenticationFacade.LoginAsync(loginRequest);
 
         if (!loginResult.Succeeded || loginResult.StatusCodeDescription == StatusCodeDescriptions.RequiresTwoFactor)
             return loginResult;
@@ -75,9 +75,9 @@ internal class AuthStateProvider : AuthenticationStateProvider
         return loginResult;
     }
 
-    public async Task<IResult> RegisterAsync(RegisterRequest registerRequest)
+    public async Task<Result> RegisterAsync(RegisterRequest registerRequest)
     {
-        IResult registerResult = await _userFacade.RegisterUserAsync(registerRequest);
+        Result registerResult = await _userFacade.RegisterUserAsync(registerRequest);
 
         return registerResult;
     }

@@ -1,86 +1,50 @@
-﻿namespace RestIdentity.Shared.Wrapper;
+﻿using System.Net;
 
-public class Result<T> : Result, IResult<T>
+namespace RestIdentity.Shared.Wrapper;
+
+public sealed record Result<T>(bool Succeeded, HttpStatusCode StatusCode, string StatusCodeDescription, IEnumerable<string> Messages, T? Data)
+    : Result(Succeeded, StatusCode, StatusCodeDescription, Messages)
 {
-    public Result()
-        : base()
-    {
-    }
+    private static readonly Result<T> successResult = new Result<T>(true, HttpStatusCode.OK, StatusCodeDescriptions.None, Array.Empty<string>(), default);
+    private static readonly Result<T> failResult = new Result<T>(false, HttpStatusCode.BadRequest, StatusCodeDescriptions.None, Array.Empty<string>(), default);
 
-    public T Data { get; set; }
-
-    public new static Result<T> Fail()
+    public static new Result<T> Success()
     {
-        return new Result<T> { Succeeded = false };
-    }
-
-    public new static Result<T> Fail(string message)
-    {
-        return new Result<T> { Succeeded = false, Messages = new string[] { message } };
-    }
-
-    public new static Result<T> Fail(IEnumerable<string> messages)
-    {
-        return new Result<T> { Succeeded = false, Messages = messages };
-    }
-
-    public new static Task<Result<T>> FailAsync()
-    {
-        return Task.FromResult(Fail());
-    }
-
-    public new static Task<Result<T>> FailAsync(string message)
-    {
-        return Task.FromResult(Fail(message));
-    }
-
-    public new static Task<Result<T>> FailAsync(IEnumerable<string> messages)
-    {
-        return Task.FromResult(Fail(messages));
-    }
-
-    public new static Result<T> Success()
-    {
-        return new Result<T> { Succeeded = true };
-    }
-
-    public new static Result<T> Success(string message)
-    {
-        return new Result<T> { Succeeded = true, Messages = new string[] { message } };
+        return successResult;
     }
 
     public static Result<T> Success(T data)
     {
-        return new Result<T> { Succeeded = true, Data = data };
+        return successResult with { Data = data };
+    }
+
+    public static new Result<T> Success(string message)
+    {
+        return successResult with { Messages = new string[] { message } };
     }
 
     public static Result<T> Success(T data, string message)
     {
-        return new Result<T> { Succeeded = true, Data = data, Messages = new string[] { message } };
+        return successResult with { Data = data, Messages = new string[] { message } };
     }
 
     public static Result<T> Success(T data, IEnumerable<string> messages)
     {
-        return new Result<T> { Succeeded = true, Data = data, Messages = messages };
+        return successResult with { Data = data, Messages = messages };
     }
 
-    public new static Task<Result<T>> SuccessAsync()
+    public static new Result<T> Fail()
     {
-        return Task.FromResult(Success());
+        return failResult;
     }
 
-    public new static Task<Result<T>> SuccessAsync(string message)
+    public static new Result<T> Fail(string message)
     {
-        return Task.FromResult(Success(message));
+        return failResult with { Messages = new string[] { message } };
     }
 
-    public static Task<Result<T>> SuccessAsync(T data)
+    public static new Result<T> Fail(IEnumerable<string> messages)
     {
-        return Task.FromResult(Success(data));
-    }
-
-    public static Task<Result<T>> SuccessAsync(T data, string message)
-    {
-        return Task.FromResult(Success(data, message));
+        return failResult with { Messages = messages };
     }
 }

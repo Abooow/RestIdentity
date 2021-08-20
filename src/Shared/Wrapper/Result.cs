@@ -2,70 +2,33 @@
 
 namespace RestIdentity.Shared.Wrapper;
 
-public class Result : IResult
+public record Result(bool Succeeded, HttpStatusCode StatusCode, string StatusCodeDescription, IEnumerable<string> Messages)
 {
-    public Result()
+    private static readonly Result successResult = new Result(true, HttpStatusCode.OK, StatusCodeDescriptions.None, Array.Empty<string>());
+    private static readonly Result failResult = new Result(false, HttpStatusCode.BadRequest, StatusCodeDescriptions.None, Array.Empty<string>());
+
+    public static Result Success()
     {
-        StatusCode = HttpStatusCode.OK;
-        StatusCodeDescription = StatusCodeDescriptions.None;
-        Messages = Array.Empty<string>();
+        return successResult;
     }
 
-    public bool Succeeded { get; set; }
-
-    public HttpStatusCode StatusCode { get; set; }
-
-    public string StatusCodeDescription { get; set; }
-
-    public IEnumerable<string> Messages { get; set; }
-
-    public static IResult Fail()
+    public static Result Success(string message)
     {
-        return new Result { Succeeded = false };
+        return successResult with { Messages = new string[] { message } };
     }
 
-    public static IResult Fail(string message)
+    public static Result Fail()
     {
-        return new Result { Succeeded = false, Messages = new string[] { message } };
+        return failResult;
     }
 
-    public static IResult Fail(IEnumerable<string> messages)
+    public static Result Fail(string message)
     {
-        return new Result { Succeeded = false, Messages = messages };
+        return failResult with { Messages = new string[] { message } };
     }
 
-    public static Task<IResult> FailAsync()
+    public static Result Fail(IEnumerable<string> messages)
     {
-        return Task.FromResult(Fail());
-    }
-
-    public static Task<IResult> FailAsync(string message)
-    {
-        return Task.FromResult(Fail(message));
-    }
-
-    public static Task<IResult> FailAsync(IEnumerable<string> messages)
-    {
-        return Task.FromResult(Fail(messages));
-    }
-
-    public static IResult Success()
-    {
-        return new Result { Succeeded = true };
-    }
-
-    public static IResult Success(string message)
-    {
-        return new Result { Succeeded = true, Messages = new string[] { message } };
-    }
-
-    public static Task<IResult> SuccessAsync()
-    {
-        return Task.FromResult(Success());
-    }
-
-    public static Task<IResult> SuccessAsync(string message)
-    {
-        return Task.FromResult(Success(message));
+        return failResult with { Messages = messages };
     }
 }

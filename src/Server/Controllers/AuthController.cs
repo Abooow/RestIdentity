@@ -34,13 +34,12 @@ public sealed partial class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("getMe")]
-    public async Task<IActionResult> GetMe()
+    public IActionResult GetMe()
     {
-        Result<CurrentUser> resultUser = await Result<CurrentUser>.SuccessAsync(new CurrentUser
-        {
-            Email = User.Identity.Name,
-            Claims = User.Claims.ToDictionary(c => c.Type, c => c.Value)
-        });
+        Result<CurrentUser> resultUser = Result<CurrentUser>.Success(new CurrentUser(
+            User.Identity.Name,
+            User.Claims.ToDictionary(c => c.Type, c => c.Value)));
+
         return Ok(resultUser);
     }
 

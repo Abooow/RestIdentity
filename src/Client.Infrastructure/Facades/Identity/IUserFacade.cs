@@ -1,31 +1,26 @@
-﻿using RestIdentity.Shared.Models;
-using RestIdentity.Shared.Models.Requests;
-using RestIdentity.Shared.Models.Response;
-using RestIdentity.Shared.Wrapper;
-
-namespace RestIdentity.Client.Infrastructure.Facades.Identity;
+﻿namespace RestIdentity.Client.Infrastructure.Facades.Identity;
 
 public interface IUserFacade
 {
-    Task<IResult<CurrentUser>> GetMeAsync();
+    Task<Result<CurrentUser>> GetMeAsync();
 
-    Task<IResult> RegisterUserAsync(RegisterRequest registerRequest);
+    Task<Result> RegisterUserAsync(RegisterRequest registerRequest);
 
-    Task<IResult> ConfirmEmailAsync(string userId, string code);
+    Task<Result> ConfirmEmailAsync(string userId, string code);
 
-    Task<IResult> ResendEmailConfirmationAsync(EmailAddress emailAddress);
+    Task<Result> ResendEmailConfirmationAsync(EmailAddress emailAddress);
 
-    Task<IResult> ChangePasswordAsync(ChangePasswordRequest changePasswordRequest);
+    Task<Result> ChangePasswordAsync(ChangePasswordRequest changePasswordRequest);
 
-    Task<IResult> ForgotPasswordAsync(EmailAddress emailAddress);
+    Task<Result> ForgotPasswordAsync(EmailAddress emailAddress);
 
-    Task<IResult> ResetPasswordAsync(ResetPasswordRequest resetPasswordRequest);
+    Task<Result> ResetPasswordAsync(ResetPasswordRequest resetPasswordRequest);
 
-    Task<IResult<TwoFactorQRCode>> EnableTwoFactorAuthAsync();
+    Task<Result<TwoFactorQRCode>> EnableTwoFactorAuthAsync();
 
-    Task<IResult> DisableTwoFactorAuthAsync();
+    Task<Result> DisableTwoFactorAuthAsync();
 
-    Task<IResult<RecoveryCodes>> GenerateRecoveryCodesAsync();
+    Task<Result<RecoveryCodes>> GenerateRecoveryCodesAsync();
 
-    Task<IResult> ResetAuthenticatorAsync();
+    Task<Result> ResetAuthenticatorAsync();
 }

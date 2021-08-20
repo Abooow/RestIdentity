@@ -77,7 +77,7 @@
     {
         buttonDisabled = true;
 
-        IResult registerResult = await AuthStateProvider.LoginAsync(loginRequest);
+        Result registerResult = await AuthStateProvider.LoginAsync(loginRequest);
         success = registerResult.Succeeded;
         
         if (!registerResult.Succeeded)
