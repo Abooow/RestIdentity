@@ -26,6 +26,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable(name: "Roles", "Identity");
         });
+
         builder.Entity<IdentityUserRole<string>>(entity =>
         {
             entity.ToTable("UserRoles", "Identity");
@@ -50,5 +51,10 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("UserTokens", "Identity");
         });
+
+        builder.Entity<IdentityRole>().HasData(
+            new() { Id = "38EE6878-8E7A-479F-9819-B85FF05D2927", Name = "Admin", NormalizedName = "ADMIN" },
+            new() { Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", Name = "Customer", NormalizedName = "CUSTOMER" });
+
     }
 }

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Security.Authentication.ExtendedProtection;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RestIdentity.Server.Migrations
 {
-    public partial class Identity : Migration
+    public partial class UserUpdate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -32,6 +31,10 @@ namespace RestIdentity.Server.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ProfilePictureUrl = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -168,6 +171,18 @@ namespace RestIdentity.Server.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.InsertData(
+                schema: "Identity",
+                table: "Roles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "2b82fca0-01b4-40cd-9abf-f10b29937d90", "Admin", "ADMIN" });
+
+            migrationBuilder.InsertData(
+                schema: "Identity",
+                table: "Roles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "78a4f760-3f78-4ef8-8c63-87de8400f10b", "Customer", "CUSTOMER" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",
