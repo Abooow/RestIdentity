@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RestIdentity.Server.Migrations
 {
-    public partial class UserUpdate : Migration
+    public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -176,13 +176,13 @@ namespace RestIdentity.Server.Migrations
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "2b82fca0-01b4-40cd-9abf-f10b29937d90", "Admin", "ADMIN" });
+                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "b1b6b80f-b706-43a3-8e4f-b6b9fb96a0ac", "Admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "78a4f760-3f78-4ef8-8c63-87de8400f10b", "Customer", "CUSTOMER" });
+                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "3138235c-e7cb-42ae-8164-2be371b82939", "Customer", "CUSTOMER" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",

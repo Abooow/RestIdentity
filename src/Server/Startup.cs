@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Services.EmailSenders;
+using RestIdentity.Server.Services.FunctionalServices;
 using RestIdentity.Shared.Wrapper;
 
 namespace RestIdentity.Server;
@@ -23,15 +24,28 @@ public sealed class Startup
         services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddDbContext<DataProtectionKeysContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("DataProtectionKeysConnection")));
+
+        var identityDefaultOptionsConfiguration = Configuration.GetSection("identityDefaultOptions");
+        services.Configure<IdentityDefaultOptions>(identityDefaultOptionsConfiguration);
+        var identityDefaultOptions = identityDefaultOptionsConfiguration.Get<IdentityDefaultOptions>();
+
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
-            options.Password.RequiredLength = 6;
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = false;
+            options.Password.RequireDigit = identityDefaultOptions.PasswordRequireDigit;
+            options.Password.RequiredLength = identityDefaultOptions.PasswordRequiredLength;
+            options.Password.RequireNonAlphanumeric = identityDefaultOptions.PasswordRequireNonAlphanumeric;
+            options.Password.RequireUppercase = identityDefaultOptions.PasswordRequireUppercase;
+            options.Password.RequireLowercase = identityDefaultOptions.PasswordRequireLowercase;
+            options.Password.RequiredUniqueChars = identityDefaultOptions.PasswordRequiredUniqueChars;
+
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(identityDefaultOptions.LockoutDefaultLockoutTimeSpanInMinutes);
+            options.Lockout.MaxFailedAccessAttempts = identityDefaultOptions.LockoutMaxFailedAccessAttempts;
+            options.Lockout.AllowedForNewUsers = identityDefaultOptions.LockoutAllowedForNewUsers;
+
+            options.User.RequireUniqueEmail = identityDefaultOptions.UserRequreUniqueEmail;
+            options.SignIn.RequireConfirmedEmail = identityDefaultOptions.SignInRequreConfirmedEmail;
         })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
@@ -56,6 +70,9 @@ public sealed class Startup
         services.AddRazorPages();
 
         services.AddTransient<IEmailSender, FileEmailSender>();
+        services.AddTransient<IFunctionalService, FunctionalService>();
+        services.Configure<AdminUserOptions>(Configuration.GetSection("DefaultUserOptions:Admin"));
+        services.Configure<CustomerUserOptions>(Configuration.GetSection("DefaultUserOptions:Customer"));
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

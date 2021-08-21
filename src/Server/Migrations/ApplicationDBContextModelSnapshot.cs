@@ -16,7 +16,7 @@ namespace RestIdentity.Server.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("ProductVersion", "5.0.8")
+                .HasAnnotation("ProductVersion", "5.0.9")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -49,14 +49,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "2b82fca0-01b4-40cd-9abf-f10b29937d90",
+                            ConcurrencyStamp = "b1b6b80f-b706-43a3-8e4f-b6b9fb96a0ac",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "78a4f760-3f78-4ef8-8c63-87de8400f10b",
+                            ConcurrencyStamp = "3138235c-e7cb-42ae-8164-2be371b82939",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
