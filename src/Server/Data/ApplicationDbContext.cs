@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
 
 namespace RestIdentity.Server.Data;
@@ -53,8 +54,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         });
 
         builder.Entity<IdentityRole>().HasData(
-            new() { Id = "38EE6878-8E7A-479F-9819-B85FF05D2927", Name = "Admin", NormalizedName = "ADMIN" },
-            new() { Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", Name = "Customer", NormalizedName = "CUSTOMER" });
+            new() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized },
+            new() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized });
 
     }
 }
