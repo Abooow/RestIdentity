@@ -8,6 +8,8 @@ namespace RestIdentity.Server.Data;
 
 public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<TokenModel> Tokens { get; set; }
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {

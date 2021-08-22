@@ -15,5 +15,4 @@ public sealed class IdentityDefaultOptions
 
     public bool UserRequreUniqueEmail { get; set; }
     public bool SignInRequreConfirmedEmail { get; set; }
-    public string AccessDeniedPath { get; set; }
 }
