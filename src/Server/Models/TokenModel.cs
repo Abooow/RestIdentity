@@ -12,17 +12,17 @@ public class TokenModel
     public string UserId { get; set; }
 
     [Required]
-    [MaxLength(450)]
+    [MaxLength(64)]
     public string ClientId { get; set; }
 
     [Required]
     public string Value { get; set; }
 
     [Required]
-    public string EncryptionKeyRt { get; set; }
+    public Guid EncryptionKeyRefreshToken { get; set; }
 
     [Required]
-    public string EncryptionKeyJwt { get; set; }
+    public Guid EncryptionKeyJwt { get; set; }
 
     [Required]
     public DateTime ExpiryDate { get; set; }

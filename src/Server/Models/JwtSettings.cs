@@ -3,7 +3,7 @@
 public sealed class JwtSettings
 {
     public string Secret { get; set; }
-    public bool ClientId { get; set; }
+    public string ClientId { get; set; }
     public string Issuer { get; set; }
     public string Audience { get; set; }
     public string AccessTokenExpirationInMinutes { get; set; }

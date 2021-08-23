@@ -1,5 +1,4 @@
-﻿using System;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
@@ -46,15 +45,13 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
             return AuthenticateResult.NoResult();
         }
 
-        if (!AuthenticationHeaderValue.TryParse($"Bearer {Request.Cookies[CookieConstants.AccessToken]}",
-            out AuthenticationHeaderValue authHeaderValue))
+        if (!AuthenticationHeaderValue.TryParse($"Bearer {Request.Cookies[CookieConstants.AccessToken]}", out AuthenticationHeaderValue authHeaderValue))
         {
             Log.Error("Could not Parse Token from Authentication Header.");
             return AuthenticateResult.NoResult();
         }
 
-        if (!AuthenticationHeaderValue.TryParse($"Bearer {Request.Cookies[CookieConstants.UserId]}",
-            out AuthenticationHeaderValue userIdHeaderValue))
+        if (!AuthenticationHeaderValue.TryParse($"Bearer {Request.Cookies[CookieConstants.UserId]}", out AuthenticationHeaderValue userIdHeaderValue))
         {
             Log.Error("Could not Parse User Id from Authentication Header.");
             return AuthenticateResult.NoResult();
@@ -63,7 +60,7 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
         try
         {
             byte[] secret = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
-            var jwtHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JwtSecurityTokenHandler();
 
             var validationParameters =
                 new TokenValidationParameters
@@ -101,10 +98,10 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
             if (tokenModel is null)
                 return AuthenticateResult.Fail("You are not Authorized");
 
-            IDataProtector layerTwoProtector = protectionProvider.CreateProtector(tokenModel.EncryptionKeyJwt);
+            IDataProtector layerTwoProtector = protectionProvider.CreateProtector(tokenModel.EncryptionKeyJwt.ToString());
             string decryptedLayerTwoToken = layerTwoProtector.Unprotect(decryptedToken);
 
-            var validateToken = jwtHandler.ValidateToken(decryptedLayerTwoToken, validationParameters, out var securityToken);
+            var validateToken = tokenHandler.ValidateToken(decryptedLayerTwoToken, validationParameters, out var securityToken);
 
             if (securityToken is not JwtSecurityToken jwtSecurityToken
                 || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
