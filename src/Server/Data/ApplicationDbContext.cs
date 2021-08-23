@@ -9,6 +9,7 @@ namespace RestIdentity.Server.Data;
 public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<TokenModel> Tokens { get; set; }
+    public DbSet<ActivityModel> Activities { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -18,6 +19,13 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<IdentityRole>().HasData(
+            new() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized },
+            new() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized });
+
+        builder.Entity<ActivityModel>()
+            .HasIndex(b => b.UserId);
 
         builder.Entity<ApplicationUser>(entity =>
         {
@@ -54,10 +62,5 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("UserTokens", "Identity");
         });
-
-        builder.Entity<IdentityRole>().HasData(
-            new() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized },
-            new() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized });
-
     }
 }

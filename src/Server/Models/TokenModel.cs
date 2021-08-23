@@ -33,6 +33,5 @@ public class TokenModel
     [Required]
     public DateTime DateCreated { get; set; }
 
-    [ForeignKey("userId")]
     public virtual ApplicationUser User { get; set; }
 }
