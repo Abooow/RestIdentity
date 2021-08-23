@@ -150,7 +150,7 @@ public sealed class AuthService : IAuthService
             RefreshTokenExpirationDate = refreshToken.ExpiryDate,
             Roles = userRoles,
             Username = user.UserName,
-            UserId = user.Id
+            UserId = layerOneProtector.Protect(user.Id)
         };
 
         return encryptedAuthToken;

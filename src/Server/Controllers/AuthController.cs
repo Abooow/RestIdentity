@@ -107,7 +107,7 @@ public sealed partial class AuthController : ControllerBase
         _cookieService.SetCookie(CookieConstants.UserId, jwtToken.UserId, jwtToken.ExpirationDate);
         _cookieService.SetCookie(CookieConstants.UserName, jwtToken.Username, jwtToken.ExpirationDate);
 
-        Log.Information("User logged in {Email}.", loginRequest.Email);
+        Log.Information("User {Email} logged in.", loginRequest.Email);
         return Ok(jwtTokenResult);
     }
 

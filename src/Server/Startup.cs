@@ -95,21 +95,6 @@ public sealed class Startup
         services.AddHttpContextAccessor();
         services.AddTransient<ICookieService, CookieService>();
 
-        services.ConfigureApplicationCookie(options =>
-        {
-            options.Cookie.HttpOnly = false;
-            options.Events.OnRedirectToLogin = context =>
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                context.Response.ContentType = "application/json";
-                using StreamWriter writer = new StreamWriter(context.Response.BodyWriter.AsStream());
-                writer.Write(JsonSerializer.Serialize(Result.Fail("You are not Authorized dud.").AsUnauthorized()));
-                context.Response.Body = writer.BaseStream;
-
-                return Task.CompletedTask;
-            };
-        });
-
         services.AddAuthentication(RolesConstants.Admin).AddScheme<AdminAuthenticationOptions, AdminAuthenticationHandler>(RolesConstants.Admin, null);
 
         services.AddControllers().ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = context =>

@@ -1,8 +1,10 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
+using RestIdentity.Shared.Wrapper;
 using Serilog;
 
 namespace RestIdentity.Server.Services.Handlers;
@@ -114,7 +117,7 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
                 return AuthenticateResult.Fail("You are not Authorized");
 
             ApplicationUser user = await _userManager.FindByNameAsync(username);
-            if (user is null || !await _userManager.IsInRoleAsync(user, RolesConstants.AdminId))
+            if (user is null || !await _userManager.IsInRoleAsync(user, RolesConstants.Admin))
                 return AuthenticateResult.Fail("You are not Authorized");
 
             var identity = new ClaimsIdentity(validateToken.Claims, Scheme.Name);
@@ -136,6 +139,12 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
         Response.Cookies.Delete(CookieConstants.AccessToken);
         Response.Cookies.Delete(CookieConstants.UserId);
         Response.Headers["WWW-Authentication"] = "Not Authorized";
+
+        Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+        Response.ContentType = "application/json";
+        using var writer = new StreamWriter(Response.BodyWriter.AsStream());
+        writer.Write(JsonSerializer.Serialize(Result.Fail("You are not Authorized.").AsUnauthorized()));
+        Response.Body = writer.BaseStream;
 
         return Task.CompletedTask;
     }
