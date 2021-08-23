@@ -65,7 +65,7 @@ public sealed class AdminAuthenticationHandler : AuthenticationHandler<AdminAuth
             var validationParameters =
                 new TokenValidationParameters
                 {
-                    ValidateIssuerSigningKey = true,
+                    ValidateIssuerSigningKey = _jwtSettings.ValidateIssuerSigningKey,
                     ValidateIssuer = _jwtSettings.ValidateIssuer,
                     ValidateAudience = _jwtSettings.ValidateAudience,
                     ValidIssuer = _jwtSettings.Issuer,

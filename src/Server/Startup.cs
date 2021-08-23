@@ -1,11 +1,20 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.Authentication;
+using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
 using RestIdentity.Server.Services.FunctionalServices;
+using RestIdentity.Server.Services.Handlers;
 using RestIdentity.Shared.Wrapper;
 
 namespace RestIdentity.Server;
@@ -27,7 +36,7 @@ public sealed class Startup
         services.AddDbContext<DataProtectionKeysContext>(options =>
         options.UseSqlServer(Configuration.GetConnectionString("DataProtectionKeysConnection")));
 
-        var identityDefaultOptionsConfiguration = Configuration.GetSection("identityDefaultOptions");
+        var identityDefaultOptionsConfiguration = Configuration.GetSection(nameof(IdentityDefaultOptions));
         services.Configure<IdentityDefaultOptions>(identityDefaultOptionsConfiguration);
         var identityDefaultOptions = identityDefaultOptionsConfiguration.Get<IdentityDefaultOptions>();
 
@@ -50,6 +59,41 @@ public sealed class Startup
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
+        var dataProtectionSection = Configuration.GetSection(nameof(DataProtectionKeys));
+        services.Configure<DataProtectionKeys>(dataProtectionSection);
+        services.AddDataProtection().PersistKeysToDbContext<DataProtectionKeysContext>();
+
+        var jwtSettingsSection = Configuration.GetSection(nameof(JwtSettings));
+        services.Configure<JwtSettings>(jwtSettingsSection);
+
+        var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+        var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
+        services.AddAuthentication(x =>
+        {
+            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            x.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
+                ValidateIssuer = jwtSettings.ValidateIssuer,
+                ValidateAudience = jwtSettings.ValidateAudience,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+        services.AddTransient<IAuthService, AuthService>();
+        services.AddTransient<IActivityService, ActivityService>();
+
+        services.AddHttpContextAccessor();
+        services.AddTransient<ICookieService, CookieService>();
+
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.HttpOnly = false;
@@ -64,6 +108,8 @@ public sealed class Startup
                 return Task.CompletedTask;
             };
         });
+
+        services.AddAuthentication(RolesConstants.Admin).AddScheme<AdminAuthenticationOptions, AdminAuthenticationHandler>(RolesConstants.Admin, null);
 
         services.AddControllers();
         services.AddControllersWithViews();

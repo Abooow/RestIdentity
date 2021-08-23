@@ -98,7 +98,7 @@ public sealed partial class AuthController : ControllerBase
         Result<TokenResponse> jwtTokenResult = await _authService.AuthenticateAsync(loginRequest);
         if (!jwtTokenResult.Succeeded)
         {
-            Log.Error("Invalid Email/Password.");
+            Log.Warning("Invalid Email/Password.");
             return BadRequest(jwtTokenResult);
         }
 
