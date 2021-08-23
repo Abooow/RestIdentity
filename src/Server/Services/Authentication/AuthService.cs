@@ -47,27 +47,27 @@ public sealed class AuthService : IAuthService
         _provider = provider;
     }
 
-    public async Task<Result<TokenResponse>> Authenticate(LoginRequest loginRequest)
+    public async Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest)
     {
+        ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        if (user is null)
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized();
+
+        if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
+        {
+            Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized();
+        }
+
+        if (!await _userManager.IsEmailConfirmedAsync(user))
+        {
+            Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
+            return Result<TokenResponse>.Fail("Email Not Confirmed.").AsUnauthorized();
+        }
+
         try
         {
-            ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email);
-            if (user is null)
-                return Result<TokenResponse>.Fail("Request Not Supported.").AsUnauthorized();
-
-            if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
-            {
-                Log.Error("Error: Invalid Password for Admin {Email}", loginRequest.Email);
-                return Result<TokenResponse>.Fail("Request Not Supported.").AsUnauthorized();
-            }
-
-            if (!await _userManager.IsEmailConfirmedAsync(user))
-            {
-                Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
-                return Result<TokenResponse>.Fail("Email Not Confirmed.").AsUnauthorized();
-            }
-
-            var authToken = await CreateAuthTokenAsync(user);
+            TokenResponse authToken = await CreateAuthTokenAsync(user);
             return Result<TokenResponse>.Success(authToken);
         }
         catch (Exception e)

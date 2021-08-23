@@ -6,5 +6,5 @@ namespace RestIdentity.Server.Services.Authentication;
 
 public interface IAuthService
 {
-    Task<Result<TokenResponse>> Authenticate(LoginRequest loginRequest);
+    Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest);
 }

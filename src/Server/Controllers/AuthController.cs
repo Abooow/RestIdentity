@@ -1,13 +1,21 @@
 ﻿using System.Data;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using RestIdentity.Server.Constants;
+using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Services.Authentication;
+using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
+using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
+using Serilog;
 using Identity = Microsoft.AspNetCore.Identity;
 
 namespace RestIdentity.Server.Controllers;
@@ -16,20 +24,41 @@ namespace RestIdentity.Server.Controllers;
 [ApiController]
 public sealed partial class AuthController : ControllerBase
 {
+    private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UrlEncoder _urlEncoder;
+    private readonly JwtSettings _jwtSettings;
+    private readonly DataProtectionKeys _dataProtectionKeys;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IEmailSender _emailSender;
+    private readonly IAuthService _authService;
+    private readonly ICookieService _cookieService;
 
-    public AuthController(UserManager<ApplicationUser> userManager,
+    private readonly string[] _cookiesToDelete = new string[] { CookieConstants.AccessToken, CookieConstants.UserId, CookieConstants.UserName };
+
+    public AuthController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         UrlEncoder urlEncoder,
-        IEmailSender emailSender)
+        IOptions<JwtSettings> jwtSettings,
+        IOptions<DataProtectionKeys> dataProtectionKeys,
+        IServiceProvider serviceProvider,
+        IEmailSender emailSender,
+        IAuthService authService,
+        ICookieService cookieService)
     {
+        _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
-        _emailSender = emailSender;
         _urlEncoder = urlEncoder;
+        _jwtSettings = jwtSettings.Value;
+        _dataProtectionKeys = dataProtectionKeys.Value;
+        _serviceProvider = serviceProvider;
+        _emailSender = emailSender;
+        _authService = authService;
+        _cookieService = cookieService;
     }
 
     [Authorize]
@@ -66,25 +95,50 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
-        Identity::SignInResult singInResult = await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, false);
+        Result<TokenResponse> jwtTokenResult = await _authService.AuthenticateAsync(loginRequest);
+        if (!jwtTokenResult.Succeeded)
+        {
+            Log.Error("Invalid Email/Password.");
+            return BadRequest(jwtTokenResult);
+        }
 
-        if (singInResult.IsNotAllowed)
-            return BadRequest(Result.Fail("Please confirm your email before continuing.").AsBadRequest().WithDescription(StatusCodeDescriptions.RequiresConfirmEmail));
+        TokenResponse jwtToken = jwtTokenResult.Data;
+        _cookieService.SetCookie(CookieConstants.AccessToken, jwtToken.Token, jwtToken.ExpirationDate);
+        _cookieService.SetCookie(CookieConstants.UserId, jwtToken.UserId, jwtToken.ExpirationDate);
+        _cookieService.SetCookie(CookieConstants.UserName, jwtToken.Username, jwtToken.ExpirationDate);
 
-        if (singInResult.RequiresTwoFactor)
-            return Ok(Result.Success("Two factor authentication needed.").WithDescription(StatusCodeDescriptions.RequiresTwoFactor));
-
-        if (!singInResult.Succeeded)
-            return BadRequest(Result.Fail("Invalid Credentials.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials));
-
-        return Ok(Result.Success());
+        Log.Information("User logged in {Email}.", loginRequest.Email);
+        return Ok(jwtTokenResult);
     }
 
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
+        string protectedUserId = _cookieService.GetCookie(CookieConstants.UserId);
+        _cookieService.DeleteCookies(_cookiesToDelete);
+
+        if (protectedUserId is null)
+        {
+            Log.Warning("No user_id Cookie found when logging out.");
+            return Ok(Result.Success());
+        }
+
+        IDataProtectionProvider protectorProvider = _serviceProvider.GetService<IDataProtectionProvider>();
+        IDataProtector protector = protectorProvider.CreateProtector(_dataProtectionKeys.ApplicationUserKey);
+        string userId = protector.Unprotect(protectedUserId);
+
+        TokenModel token = _context.Tokens.FirstOrDefault(x => x.UserId == userId);
+        if (token is not null)
+        {
+            _context.Remove(token);
+            await _context.SaveChangesAsync();
+
+        }
+        else
+            Log.Warning("Invalid userId was detected from user_id Cookie");
+
+        Log.Information("User logged out.");
         return Ok(Result.Success());
     }
 
