@@ -43,6 +43,11 @@ public sealed record Result<T>(bool Succeeded, HttpStatusCode StatusCode, string
         return failResult with { Messages = new string[] { message } };
     }
 
+    public static Result<T> Fail(T data, string message)
+    {
+        return failResult with { Data = data, Messages = new string[] { message } };
+    }
+
     public static new Result<T> Fail(IEnumerable<string> messages)
     {
         return failResult with { Messages = messages };

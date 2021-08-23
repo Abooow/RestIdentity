@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.Constants;
@@ -111,7 +112,19 @@ public sealed class Startup
 
         services.AddAuthentication(RolesConstants.Admin).AddScheme<AdminAuthenticationOptions, AdminAuthenticationHandler>(RolesConstants.Admin, null);
 
-        services.AddControllers();
+        services.AddControllers().ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = context =>
+            {
+                var problemDetails = new ValidationProblemDetails(context.ModelState)
+                {
+                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                    Title = "One or more model validation errors occurred.",
+                    Status = StatusCodes.Status400BadRequest,
+                    Detail = "See the errors property for details",
+                    Instance = context.HttpContext.Request.Path
+                };
+
+                return new OkObjectResult(Result<ValidationProblemDetails>.Fail(problemDetails, "One or more model validation errors occurred.").AsBadRequest());
+            });
         services.AddControllersWithViews();
         services.AddRazorPages();
 
