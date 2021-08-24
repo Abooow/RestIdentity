@@ -1,4 +1,4 @@
-﻿using RestIdentity.Server.Models;
+﻿using RestIdentity.Server.Models.DAO;
 
 namespace RestIdentity.Server.Services.Activity;
 

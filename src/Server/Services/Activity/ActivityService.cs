@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Data;
-using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.DAO;
 using Serilog;
 
 namespace RestIdentity.Server.Services.Activity;

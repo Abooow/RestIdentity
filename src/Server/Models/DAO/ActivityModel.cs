@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
 
-namespace RestIdentity.Server.Models;
+namespace RestIdentity.Server.Models.DAO;
 
 public class ActivityModel
 {

@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Shared.Models.Requests;

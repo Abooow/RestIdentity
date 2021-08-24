@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.DAO;
 using Serilog;
 
 namespace RestIdentity.Server.Services.FunctionalServices;

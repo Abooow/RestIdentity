@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.DAO;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 

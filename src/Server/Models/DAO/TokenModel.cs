@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestIdentity.Server.Models;
+namespace RestIdentity.Server.Models.DAO;
+
 public class TokenModel
 {
     [Key]
@@ -27,8 +27,7 @@ public class TokenModel
     [Required]
     public DateTime ExpiryDate { get; set; }
 
-    [Required]
-    public DateTime LastModifiedDate { get; set; }
+    public DateTime? LastModifiedDate { get; set; }
 
     [Required]
     public DateTime DateCreated { get; set; }

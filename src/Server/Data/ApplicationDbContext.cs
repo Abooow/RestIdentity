@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.DAO;
 
 namespace RestIdentity.Server.Data;
 
