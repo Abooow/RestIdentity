@@ -12,7 +12,6 @@ using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
-using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.IpInfo;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
@@ -68,7 +67,7 @@ public sealed class AuthService : IAuthService
         if (user is null)
         {
             Log.Error("Could Not find User {Email}", loginRequest.Email);
-            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized().WithDescription(StatusCodeDescriptions.InvalidCredentials);
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
         }
         activity.UserId = user.Id;
 
@@ -80,7 +79,7 @@ public sealed class AuthService : IAuthService
             await _activityService.AddUserActivity(activity);
 
             Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
-            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized().WithDescription(StatusCodeDescriptions.InvalidCredentials);
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
         }
 
         // Check Email Confirmed.
@@ -174,16 +173,18 @@ public sealed class AuthService : IAuthService
         var layerOneProtector = protectorProvider.CreateProtector(_dataProtectionKeys.ApplicationUserKey);
         var protectorRefreshToken = protectorProvider.CreateProtector(encryptionKeyRefreshToken.ToString());
 
-        var encryptedAuthToken = new TokenResponse()
-        {
-            Token = layerOneProtector.Protect(encryptedToken),
-            RefreshToken = protectorRefreshToken.Protect(refreshToken.Value),
-            ExpirationDate = token.ValidTo,
-            RefreshTokenExpirationDate = refreshToken.ExpiryDate,
-            Roles = userRoles,
-            Username = user.UserName,
-            UserId = layerOneProtector.Protect(user.Id)
-        };
+        var encryptedAuthToken = new TokenResponse
+        (
+            layerOneProtector.Protect(encryptedToken),
+            protectorRefreshToken.Protect(refreshToken.Value),
+            token.ValidTo,
+            refreshToken.ExpiryDate,
+            userRoles,
+            user.UserName,
+            layerOneProtector.Protect(user.Id),
+            false,
+            null
+        );
 
         return encryptedAuthToken;
     }

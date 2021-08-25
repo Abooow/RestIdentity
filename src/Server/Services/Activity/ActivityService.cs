@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.DAO;
 using Serilog;
@@ -33,8 +34,19 @@ public sealed class ActivityService : IActivityService
         }
     }
 
-    public async Task<IEnumerable<ActivityModel>> GetUserActivity(string userId)
+    public async Task<IEnumerable<ActivityModel>> GetPartialUserActivity(string userId)
+
     {
-        return await _context.Activities.Where(x => x.UserId == userId).ToArrayAsync();
+        return await _context.Activities.Where(x => x.UserId == userId
+            && x.Type == ActivityConstants.AuthSignedIn)
+            .OrderBy(x => x.Date)
+            .ToArrayAsync();
+    }
+
+    public async Task<IEnumerable<ActivityModel>> GetFullUserActivity(string userId)
+    {
+        return await _context.Activities.Where(x => x.UserId == userId)
+            .OrderBy(x => x.Date)
+            .ToArrayAsync();
     }
 }

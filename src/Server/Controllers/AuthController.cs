@@ -18,7 +18,6 @@ using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
-using Identity = Microsoft.AspNetCore.Identity;
 
 namespace RestIdentity.Server.Controllers;
 
@@ -49,7 +48,7 @@ public sealed partial class AuthController : ControllerBase
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IServiceProvider serviceProvider,
         IEmailSender emailSender,
-         IActivityService activityService,
+        IActivityService activityService,
         IAuthService authService,
         ICookieService cookieService)
     {
@@ -66,25 +65,18 @@ public sealed partial class AuthController : ControllerBase
         _cookieService = cookieService;
     }
 
-    [Authorize]
-    [HttpGet("getMe")]
-    public IActionResult GetMe()
-    {
-        Result<CurrentUser> resultUser = Result<CurrentUser>.Success(new CurrentUser(
-            User.Identity.Name,
-            User.Claims.ToDictionary(c => c.Type, c => c.Value)));
-
-        return Ok(resultUser);
-    }
-
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest registerRequest)
     {
         ApplicationUser user = new ApplicationUser
         {
-            UserName = registerRequest.Email,
-            Email = registerRequest.Email
+            UserName = registerRequest.UserName,
+            Email = registerRequest.Email,
+            FirstName = registerRequest.FirstName,
+            LastName = registerRequest.LastName,
+            ProfilePictureUrl = "",
+            DateCreated = DateTime.UtcNow
         };
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
 

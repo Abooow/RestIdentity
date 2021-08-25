@@ -10,6 +10,22 @@ public sealed class RegisterRequest
     public string? Email { get; set; }
 
     [Required]
+    [DataType(DataType.Text)]
+    [StringLength(20, MinimumLength = 2)]
+    [RegularExpression(@"^[a-zA-Z][a-zA-Z0-9]{1,19}$", ErrorMessage = "Please enter a valid UserName")]
+    public string? UserName { get; set; }
+
+    [Required]
+    [DataType(DataType.Text)]
+    [StringLength(50, MinimumLength = 2)]
+    public string? FirstName { get; set; }
+
+    [Required]
+    [DataType(DataType.Text)]
+    [StringLength(50, MinimumLength = 2)]
+    public string? LastName { get; set; }
+
+    [Required]
     [DataType(DataType.Password)]
     public string? Password { get; set; }
 
