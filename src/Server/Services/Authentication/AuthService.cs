@@ -13,6 +13,7 @@ using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Cookies;
+using RestIdentity.Server.Services.IpInfo;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
@@ -24,51 +25,81 @@ public sealed class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _context;
+    private readonly IdentityDefaultOptions _identityOptions;
     private readonly JwtSettings _jwtSettings;
     private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly ICookieService _cookieService;
+    private readonly IIpInfoService _ipInfoService;
     private readonly IActivityService _activityService;
     private readonly IServiceProvider _provider;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext context,
+        IOptions<IdentityDefaultOptions> identityOptions,
         IOptions<JwtSettings> jwtSettings,
         IOptions<DataProtectionKeys> dataProtectionKeys,
-        ICookieService cookieService,
+        IIpInfoService ipInfoService,
         IActivityService activityService,
         IServiceProvider provider)
     {
         _userManager = userManager;
         _context = context;
+        _identityOptions = identityOptions.Value;
         _jwtSettings = jwtSettings.Value;
         _activityService = activityService;
         _dataProtectionKeys = dataProtectionKeys.Value;
-        _cookieService = cookieService;
+        _ipInfoService = ipInfoService;
         _provider = provider;
     }
 
     public async Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest)
     {
+        var ipInfo = await _ipInfoService.GetIpInfo();
+        var activity = new ActivityModel()
+        {
+            IpAddress = _ipInfoService.GetRemoteIpAddress(),
+            Location = ipInfo.Country is null ? "unknown" : $"{ipInfo.Country}, {ipInfo.City}",
+            OperationgSystem = _ipInfoService.GetRemoteOperatingSystem(),
+            Date = DateTime.UtcNow
+        };
+
+        // Find User.
         ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email);
         if (user is null)
-            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized();
+        {
+            Log.Error("Could Not find User {Email}", loginRequest.Email);
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized().WithDescription(StatusCodeDescriptions.InvalidCredentials);
+        }
+        activity.UserId = user.Id;
 
+        // Check Password.
         if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
         {
+
+            activity.Type = ActivityConstants.AuthInvalidPassword;
+            await _activityService.AddUserActivity(activity);
+
             Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
-            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized();
+            return Result<TokenResponse>.Fail("Invalid Email/Password.").AsUnauthorized().WithDescription(StatusCodeDescriptions.InvalidCredentials);
         }
 
-        if (!await _userManager.IsEmailConfirmedAsync(user))
+        // Check Email Confirmed.
+        if (_identityOptions.SignInRequreConfirmedEmail && !await _userManager.IsEmailConfirmedAsync(user))
         {
+            activity.Type = ActivityConstants.AuthEmailNotConfirmed;
+            await _activityService.AddUserActivity(activity);
+
             Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
-            return Result<TokenResponse>.Fail("Email Not Confirmed.").AsUnauthorized();
+            return Result<TokenResponse>.Fail("Email Not Confirmed.").WithDescription(StatusCodeDescriptions.RequiresConfirmEmail);
         }
 
         try
         {
+            activity.Type = ActivityConstants.AuthSignedIn;
+            await _activityService.AddUserActivity(activity);
+
             TokenResponse authToken = await CreateAuthTokenAsync(user);
+            Log.Information("User {Email} Signed In", user.Email);
             return Result<TokenResponse>.Success(authToken);
         }
         catch (Exception e)

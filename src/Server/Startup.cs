@@ -15,6 +15,7 @@ using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
 using RestIdentity.Server.Services.FunctionalServices;
 using RestIdentity.Server.Services.Handlers;
+using RestIdentity.Server.Services.IpInfo;
 using RestIdentity.Shared.Wrapper;
 
 namespace RestIdentity.Server;
@@ -111,6 +112,9 @@ public sealed class Startup
             });
         services.AddControllersWithViews();
         services.AddRazorPages();
+
+        services.AddHttpClient();
+        services.AddTransient<IIpInfoService, TestIpInfoService>();
 
         services.AddTransient<IEmailSender, FileEmailSender>();
         services.AddTransient<IFunctionalService, FunctionalService>();

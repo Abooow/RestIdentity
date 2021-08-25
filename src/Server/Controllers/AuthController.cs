@@ -9,6 +9,7 @@ using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
+using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
@@ -33,6 +34,7 @@ public sealed partial class AuthController : ControllerBase
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEmailSender _emailSender;
+    private readonly IActivityService _activityService;
     private readonly IAuthService _authService;
     private readonly ICookieService _cookieService;
 
@@ -47,6 +49,7 @@ public sealed partial class AuthController : ControllerBase
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IServiceProvider serviceProvider,
         IEmailSender emailSender,
+         IActivityService activityService,
         IAuthService authService,
         ICookieService cookieService)
     {
@@ -58,6 +61,7 @@ public sealed partial class AuthController : ControllerBase
         _dataProtectionKeys = dataProtectionKeys.Value;
         _serviceProvider = serviceProvider;
         _emailSender = emailSender;
+        _activityService = activityService;
         _authService = authService;
         _cookieService = cookieService;
     }
@@ -97,18 +101,16 @@ public sealed partial class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
         Result<TokenResponse> jwtTokenResult = await _authService.AuthenticateAsync(loginRequest);
-        if (!jwtTokenResult.Succeeded)
-        {
-            Log.Warning("Invalid Email/Password.");
+        if (jwtTokenResult.StatusCodeDescription == StatusCodeDescriptions.RequiresConfirmEmail)
+            return Ok(jwtTokenResult);
+        else if (!jwtTokenResult.Succeeded)
             return BadRequest(jwtTokenResult);
-        }
 
         TokenResponse jwtToken = jwtTokenResult.Data;
         _cookieService.SetCookie(CookieConstants.AccessToken, jwtToken.Token, jwtToken.ExpirationDate);
         _cookieService.SetCookie(CookieConstants.UserId, jwtToken.UserId, jwtToken.ExpirationDate);
         _cookieService.SetCookie(CookieConstants.UserName, jwtToken.Username, jwtToken.ExpirationDate);
 
-        Log.Information("User {Email} logged in.", loginRequest.Email);
         return Ok(jwtTokenResult);
     }
 
@@ -134,7 +136,6 @@ public sealed partial class AuthController : ControllerBase
         {
             _context.Remove(token);
             await _context.SaveChangesAsync();
-
         }
         else
             Log.Warning("Invalid userId was detected from user_id Cookie");
