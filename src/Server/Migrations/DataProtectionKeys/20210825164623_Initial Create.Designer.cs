@@ -9,7 +9,7 @@ using RestIdentity.Server.Data;
 namespace RestIdentity.Server.Migrations.DataProtectionKeys
 {
     [DbContext(typeof(DataProtectionKeysContext))]
-    [Migration("20210823180258_Initial Create")]
+    [Migration("20210825164623_Initial Create")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

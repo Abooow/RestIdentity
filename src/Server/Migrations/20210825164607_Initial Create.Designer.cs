@@ -10,7 +10,7 @@ using RestIdentity.Server.Data;
 namespace RestIdentity.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210823180246_Initial Create")]
+    [Migration("20210825164607_Initial Create")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,14 +51,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "56219c5c-761e-483b-88c6-44baab362545",
+                            ConcurrencyStamp = "d856398e-740f-4d02-bab0-c24493251a77",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "0e2fa239-8efc-4249-a6ff-eb4522fcea67",
+                            ConcurrencyStamp = "07f9eccb-fc4d-43db-861a-e2b1e5c3f5d3",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
@@ -168,7 +168,7 @@ namespace RestIdentity.Server.Migrations
                     b.ToTable("UserTokens", "Identity");
                 });
 
-            modelBuilder.Entity("RestIdentity.Server.Models.ActivityModel", b =>
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.ActivityModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -207,7 +207,7 @@ namespace RestIdentity.Server.Migrations
                     b.ToTable("Activities");
                 });
 
-            modelBuilder.Entity("RestIdentity.Server.Models.ApplicationUser", b =>
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
@@ -291,7 +291,7 @@ namespace RestIdentity.Server.Migrations
                     b.ToTable("Users", "Identity");
                 });
 
-            modelBuilder.Entity("RestIdentity.Server.Models.TokenModel", b =>
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.TokenModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -315,7 +315,7 @@ namespace RestIdentity.Server.Migrations
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("LastModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
@@ -345,7 +345,7 @@ namespace RestIdentity.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("RestIdentity.Server.Models.ApplicationUser", null)
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -354,7 +354,7 @@ namespace RestIdentity.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("RestIdentity.Server.Models.ApplicationUser", null)
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -369,7 +369,7 @@ namespace RestIdentity.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RestIdentity.Server.Models.ApplicationUser", null)
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -378,16 +378,16 @@ namespace RestIdentity.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("RestIdentity.Server.Models.ApplicationUser", null)
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RestIdentity.Server.Models.TokenModel", b =>
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.TokenModel", b =>
                 {
-                    b.HasOne("RestIdentity.Server.Models.ApplicationUser", "User")
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
