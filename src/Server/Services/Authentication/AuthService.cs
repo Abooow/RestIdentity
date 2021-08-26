@@ -27,7 +27,6 @@ public sealed class AuthService : IAuthService
     private readonly IdentityDefaultOptions _identityOptions;
     private readonly JwtSettings _jwtSettings;
     private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly IIpInfoService _ipInfoService;
     private readonly IActivityService _activityService;
     private readonly IServiceProvider _provider;
 
@@ -37,7 +36,6 @@ public sealed class AuthService : IAuthService
         IOptions<IdentityDefaultOptions> identityOptions,
         IOptions<JwtSettings> jwtSettings,
         IOptions<DataProtectionKeys> dataProtectionKeys,
-        IIpInfoService ipInfoService,
         IActivityService activityService,
         IServiceProvider provider)
     {
@@ -47,21 +45,11 @@ public sealed class AuthService : IAuthService
         _jwtSettings = jwtSettings.Value;
         _activityService = activityService;
         _dataProtectionKeys = dataProtectionKeys.Value;
-        _ipInfoService = ipInfoService;
         _provider = provider;
     }
 
     public async Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest)
     {
-        var ipInfo = await _ipInfoService.GetIpInfo();
-        var activity = new ActivityModel()
-        {
-            IpAddress = _ipInfoService.GetRemoteIpAddress(),
-            Location = ipInfo.Country is null ? "unknown" : $"{ipInfo.Country}, {ipInfo.City}",
-            OperationgSystem = _ipInfoService.GetRemoteOperatingSystem(),
-            Date = DateTime.UtcNow
-        };
-
         // Find User.
         ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email);
         if (user is null)
@@ -69,14 +57,11 @@ public sealed class AuthService : IAuthService
             Log.Error("Could Not find User {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
         }
-        activity.UserId = user.Id;
 
         // Check Password.
         if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
         {
-
-            activity.Type = ActivityConstants.AuthInvalidPassword;
-            await _activityService.AddUserActivity(activity);
+            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthInvalidPassword);
 
             Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
@@ -85,8 +70,7 @@ public sealed class AuthService : IAuthService
         // Check Email Confirmed.
         if (_identityOptions.SignInRequreConfirmedEmail && !await _userManager.IsEmailConfirmedAsync(user))
         {
-            activity.Type = ActivityConstants.AuthEmailNotConfirmed;
-            await _activityService.AddUserActivity(activity);
+            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthEmailNotConfirmed);
 
             Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Email Not Confirmed.").WithDescription(StatusCodeDescriptions.RequiresConfirmEmail);
@@ -94,8 +78,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            activity.Type = ActivityConstants.AuthSignedIn;
-            await _activityService.AddUserActivity(activity);
+            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthSignedIn);
 
             TokenResponse authToken = await CreateAuthTokenAsync(user);
             Log.Information("User {Email} Signed In", user.Email);

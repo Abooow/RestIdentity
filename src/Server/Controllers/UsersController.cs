@@ -43,7 +43,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("getMe")]
     public async Task<IActionResult> GetMe()
     {
-        UserProfile userProfile = await _userService.GetLoggedInUserProfile();
+        UserProfile userProfile = await _userService.GetLoggedInUserProfileAsync();
 
         return userProfile is null
             ? Unauthorized(Result<UserProfile>.Fail("Could not get User.").AsUnauthorized())
@@ -54,7 +54,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("getUser/{id}")]
     public async Task<IActionResult> GetUser(string id)
     {
-        UserProfile userProfile = await _userService.GetUserProfileById(id);
+        UserProfile userProfile = await _userService.GetUserProfileByIdAsync(id);
 
         return userProfile is null
             ? NotFound(Result<UserProfile>.Fail("Could not find User.").AsNotFound())

@@ -18,6 +18,7 @@ namespace RestIdentity.Server.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     Type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Data = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     IpAddress = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     OperationgSystem = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
@@ -221,13 +222,13 @@ namespace RestIdentity.Server.Migrations
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "d856398e-740f-4d02-bab0-c24493251a77", "Admin", "ADMIN" });
+                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "b5b44515-249f-4bcb-97cd-100319fb6674", "Admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "07f9eccb-fc4d-43db-861a-e2b1e5c3f5d3", "Customer", "CUSTOMER" });
+                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "3798b8cf-22af-4a5e-b7df-819cfbbe553d", "Customer", "CUSTOMER" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Activities_UserId",

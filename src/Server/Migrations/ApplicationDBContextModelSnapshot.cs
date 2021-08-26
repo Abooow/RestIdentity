@@ -49,14 +49,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "d856398e-740f-4d02-bab0-c24493251a77",
+                            ConcurrencyStamp = "b5b44515-249f-4bcb-97cd-100319fb6674",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "07f9eccb-fc4d-43db-861a-e2b1e5c3f5d3",
+                            ConcurrencyStamp = "3798b8cf-22af-4a5e-b7df-819cfbbe553d",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
@@ -172,6 +172,10 @@ namespace RestIdentity.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Data")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");

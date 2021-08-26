@@ -13,6 +13,7 @@ using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
+using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
@@ -36,6 +37,7 @@ public sealed partial class AuthController : ControllerBase
     private readonly IActivityService _activityService;
     private readonly IAuthService _authService;
     private readonly ICookieService _cookieService;
+    private readonly IUserService _userService;
 
     private readonly string[] _cookiesToDelete = new string[] { CookieConstants.AccessToken, CookieConstants.UserId, CookieConstants.UserName };
 
@@ -50,7 +52,8 @@ public sealed partial class AuthController : ControllerBase
         IEmailSender emailSender,
         IActivityService activityService,
         IAuthService authService,
-        ICookieService cookieService)
+        ICookieService cookieService,
+        IUserService userService)
     {
         _context = context;
         _userManager = userManager;
@@ -63,29 +66,39 @@ public sealed partial class AuthController : ControllerBase
         _activityService = activityService;
         _authService = authService;
         _cookieService = cookieService;
+        _userService = userService;
     }
 
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest registerRequest)
     {
-        ApplicationUser user = new ApplicationUser
+        Result<ApplicationUser> registerUserReult = await _userService.RegisterUserAsync(registerRequest);
+
+        if (!registerUserReult.Succeeded)
         {
-            UserName = registerRequest.UserName,
-            Email = registerRequest.Email,
-            FirstName = registerRequest.FirstName,
-            LastName = registerRequest.LastName,
-            ProfilePictureUrl = "",
-            DateCreated = DateTime.UtcNow
-        };
-        IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
+            Result result = registerUserReult;
+            return BadRequest(result);
+        }
 
-        if (!result.Succeeded)
-            return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+        await GenerateAndSendConfirmationEmail(registerUserReult.Data);
 
-        await GenerateAndSendConfirmationEmail(user);
+        return Ok(Result.Success($"User {registerUserReult.Data.Email} Registered. Please check your Mailbox to verify!"));
+    }
 
-        return Ok(Result.Success($"User {user.Email} Registered. Please check your Mailbox to verify!"));
+    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
+    [HttpPost("registerAdmin")]
+    public async Task<IActionResult> RegisterAdmin(RegisterRequest registerRequest)
+    {
+        Result<ApplicationUser> registerUserReult = await _userService.RegisterAdminUserAsync(registerRequest);
+
+        if (!registerUserReult.Succeeded)
+        {
+            Result result = registerUserReult;
+            return BadRequest(result);
+        }
+
+        return Ok(Result.Success($"Admin User {registerUserReult.Data.Email} Registered."));
     }
 
     [AllowAnonymous]

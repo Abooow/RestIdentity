@@ -16,6 +16,7 @@ using RestIdentity.Server.Services.EmailSenders;
 using RestIdentity.Server.Services.FunctionalServices;
 using RestIdentity.Server.Services.Handlers;
 using RestIdentity.Server.Services.IpInfo;
+using RestIdentity.Server.Services.ProfileImage;
 using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Wrapper;
 
@@ -94,6 +95,7 @@ public sealed class Startup
         services.AddTransient<IActivityService, ActivityService>();
 
         services.AddTransient<IUserService, UserService>();
+        services.AddTransient<IProfileImageService, ProfileImageService>();
 
         services.AddHttpContextAccessor();
         services.AddTransient<ICookieService, CookieService>();
