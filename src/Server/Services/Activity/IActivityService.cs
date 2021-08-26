@@ -4,10 +4,10 @@ namespace RestIdentity.Server.Services.Activity;
 
 public interface IActivityService
 {
-    Task AddUserActivityForSignInUser(string type);
-    Task AddUserActivityForSignInUser(string type, string data);
-    Task AddUserActivity(string userId, string type);
-    Task AddUserActivity(string userId, string type, string data);
-    Task<IEnumerable<ActivityModel>> GetPartialUserActivity(string userId);
-    Task<IEnumerable<ActivityModel>> GetFullUserActivity(string userId);
+    Task AddUserActivityForSignInUserAsync(string type);
+    Task AddUserActivityForSignInUserAsync(string type, string data);
+    Task AddUserActivityAsync(string userId, string type);
+    Task AddUserActivityAsync(string userId, string type, string data);
+    Task<IEnumerable<ActivityModel>> GetPartialUserActivityAsync(string userId);
+    Task<IEnumerable<ActivityModel>> GetFullUserActivityAsync(string userId);
 }

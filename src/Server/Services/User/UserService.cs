@@ -56,7 +56,7 @@ internal sealed class UserService : IUserService
             ProfilePictureUrl = "",
             DateCreated = DateTime.UtcNow
         };
-        user.ProfilePictureUrl = await _profileImageService.CreateDefaultProfileImage(user);
+        user.ProfilePictureUrl = await _profileImageService.CreateDefaultProfileImageAsync(user);
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
 
         if (!result.Succeeded)
@@ -65,7 +65,7 @@ internal sealed class UserService : IUserService
         Log.Information("Customer User {Email} registered", user.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Customer);
 
-        await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthRegistered);
+        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthRegistered);
 
         return Result<ApplicationUser>.Success(user);
     }
@@ -89,7 +89,7 @@ internal sealed class UserService : IUserService
             ProfilePictureUrl = "",
             DateCreated = DateTime.UtcNow
         };
-        user.ProfilePictureUrl = await _profileImageService.CreateDefaultProfileImage(user);
+        user.ProfilePictureUrl = await _profileImageService.CreateDefaultProfileImageAsync(user);
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
 
         if (!result.Succeeded)
@@ -98,8 +98,8 @@ internal sealed class UserService : IUserService
         Log.Information("Admin User {Email} registered by {}", user.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Admin);
 
-        await _activityService.AddUserActivityForSignInUser(ActivityConstants.CreateAdminUser, "USER_ID: " + user.Id);
-        await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthRegistered);
+        await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.CreateAdminUser, "USER_ID: " + user.Id);
+        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthRegistered);
 
         return Result<ApplicationUser>.Success(user);
     }

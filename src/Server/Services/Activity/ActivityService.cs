@@ -35,12 +35,12 @@ public sealed class ActivityService : IActivityService
         _cookieService = cookieService;
     }
 
-    public Task AddUserActivityForSignInUser(string type)
+    public Task AddUserActivityForSignInUserAsync(string type)
     {
-        return AddUserActivityForSignInUser(type, null);
+        return AddUserActivityForSignInUserAsync(type, null);
     }
 
-    public Task AddUserActivityForSignInUser(string type, string data)
+    public Task AddUserActivityForSignInUserAsync(string type, string data)
     {
         string userId = GetLoggedInUserId();
         if (userId is null)
@@ -49,17 +49,17 @@ public sealed class ActivityService : IActivityService
             return Task.CompletedTask;
         }
 
-        return AddUserActivity(userId, type, data);
+        return AddUserActivityAsync(userId, type, data);
     }
 
-    public Task AddUserActivity(string userId, string type)
+    public Task AddUserActivityAsync(string userId, string type)
     {
-        return AddUserActivity(userId, type, null);
+        return AddUserActivityAsync(userId, type, null);
     }
 
-    public async Task AddUserActivity(string userId, string type, string data)
+    public async Task AddUserActivityAsync(string userId, string type, string data)
     {
-        IIpInfo ipInfo = await _ipInfoService.GetIpInfo();
+        IIpInfo ipInfo = await _ipInfoService.GetIpInfoAsync();
         var activity = new ActivityModel()
         {
             Type = type,
@@ -71,10 +71,10 @@ public sealed class ActivityService : IActivityService
             Date = DateTime.UtcNow
         };
 
-        await AddUserActivity(activity);
+        await AddUserActivityAsync(activity);
     }
 
-    public async Task<IEnumerable<ActivityModel>> GetPartialUserActivity(string userId)
+    public async Task<IEnumerable<ActivityModel>> GetPartialUserActivityAsync(string userId)
 
     {
         return await _context.Activities.Where(x => x.UserId == userId
@@ -83,14 +83,14 @@ public sealed class ActivityService : IActivityService
             .ToArrayAsync();
     }
 
-    public async Task<IEnumerable<ActivityModel>> GetFullUserActivity(string userId)
+    public async Task<IEnumerable<ActivityModel>> GetFullUserActivityAsync(string userId)
     {
         return await _context.Activities.Where(x => x.UserId == userId)
             .OrderBy(x => x.Date)
             .ToArrayAsync();
     }
 
-    private async Task AddUserActivity(ActivityModel activity)
+    private async Task AddUserActivityAsync(ActivityModel activity)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync();
 

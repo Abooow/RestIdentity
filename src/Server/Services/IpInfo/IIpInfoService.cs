@@ -6,6 +6,6 @@ public interface IIpInfoService
 {
     string GetRemoteIpAddress();
     string GetRemoteOperatingSystem();
-    Task<IIpInfo> GetIpInfo(CancellationToken cancellationToken = default);
-    Task<IIpInfo> GetIpInfo(string ip, CancellationToken cancellationToken = default);
+    Task<IIpInfo> GetIpInfoAsync(CancellationToken cancellationToken = default);
+    Task<IIpInfo> GetIpInfoAsync(string ip, CancellationToken cancellationToken = default);
 }

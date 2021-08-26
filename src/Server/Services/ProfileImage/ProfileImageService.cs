@@ -4,7 +4,7 @@ namespace RestIdentity.Server.Services.ProfileImage;
 
 internal sealed class ProfileImageService : IProfileImageService
 {
-    public Task<string> CreateDefaultProfileImage(ApplicationUser user)
+    public Task<string> CreateDefaultProfileImageAsync(ApplicationUser user)
     {
         return Task.FromResult(string.Empty);
     }

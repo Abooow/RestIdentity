@@ -66,7 +66,7 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> GetMyActivity()
     {
         string userId = _userService.GetLoggedInUserId();
-        IEnumerable<ActivityModel> activities = await _activityService.GetPartialUserActivity(userId);
+        IEnumerable<ActivityModel> activities = await _activityService.GetPartialUserActivityAsync(userId);
 
         return Ok(MapActivities(activities));
     }
@@ -75,7 +75,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("getUserActivity/{id}")]
     public async Task<IActionResult> GetUserActivity(string id)
     {
-        IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivity(id);
+        IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivityAsync(id);
 
         return Ok(MapActivities(activities));
     }

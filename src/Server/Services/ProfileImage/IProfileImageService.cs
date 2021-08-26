@@ -4,5 +4,5 @@ namespace RestIdentity.Server.Services.ProfileImage;
 
 internal interface IProfileImageService
 {
-    Task<string> CreateDefaultProfileImage(ApplicationUser user);
+    Task<string> CreateDefaultProfileImageAsync(ApplicationUser user);
 }

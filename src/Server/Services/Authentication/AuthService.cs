@@ -61,7 +61,7 @@ public sealed class AuthService : IAuthService
         // Check Password.
         if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
         {
-            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthInvalidPassword);
+            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthInvalidPassword);
 
             Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
@@ -70,7 +70,7 @@ public sealed class AuthService : IAuthService
         // Check Email Confirmed.
         if (_identityOptions.SignInRequreConfirmedEmail && !await _userManager.IsEmailConfirmedAsync(user))
         {
-            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthEmailNotConfirmed);
+            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthEmailNotConfirmed);
 
             Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Email Not Confirmed.").WithDescription(StatusCodeDescriptions.RequiresConfirmEmail);
@@ -78,7 +78,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            await _activityService.AddUserActivity(user.Id, ActivityConstants.AuthSignedIn);
+            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthSignedIn);
 
             TokenResponse authToken = await CreateAuthTokenAsync(user);
             Log.Information("User {Email} Signed In", user.Email);

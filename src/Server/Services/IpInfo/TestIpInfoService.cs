@@ -35,13 +35,13 @@ internal sealed class TestIpInfoService : IIpInfoService
         return _httpContextAccessor.HttpContext.Request.Headers["User-Agent"];
     }
 
-    public Task<IIpInfo> GetIpInfo(CancellationToken cancellationToken)
+    public Task<IIpInfo> GetIpInfoAsync(CancellationToken cancellationToken)
     {
         string userIp = GetRemoteIpAddress();
-        return GetIpInfo(userIp, cancellationToken);
+        return GetIpInfoAsync(userIp, cancellationToken);
     }
 
-    public async Task<IIpInfo> GetIpInfo(string ip, CancellationToken cancellationToken = default)
+    public async Task<IIpInfo> GetIpInfoAsync(string ip, CancellationToken cancellationToken = default)
     {
         HttpClient client = _clientFactory.CreateClient();
         ModelsIp::IpInfo ipInfo = ip == "::1"
