@@ -186,15 +186,14 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("changePassword")]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest)
     {
-        ApplicationUser user = await _userManager.GetUserAsync(User);
-        if (user is null)
-            return NotFound(Result.Fail("User was not found.").AsNotFound());
+        IdentityUserResult changePasswordResult = await _userService.ChangeSignedInUserPasswordAsync(changePasswordRequest);
 
-        IdentityResult result = await _userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
-        if (!result.Succeeded)
-            return BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
+        if (changePasswordResult.FailedToGetUser)
+            return BadRequest(Result.Fail("Failed to get User").AsBadRequest());
 
-        await _signInManager.RefreshSignInAsync(user);
+        if (!changePasswordResult.Succeeded)
+            return BadRequest(Result.Fail(changePasswordResult.Errors.Select(x => x.Description)).AsBadRequest());
+
         return Ok(Result.Success("Password was successfully changed."));
     }
 

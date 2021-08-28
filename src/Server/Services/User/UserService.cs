@@ -95,7 +95,7 @@ internal sealed class UserService : IUserService
         if (!result.Succeeded)
             return Result<ApplicationUser>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
-        Log.Information("Admin User {Email} registered by {}", user.Email);
+        Log.Information("Admin User {Email} registered by {SignInUser}", user.Email, signedInUser.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Admin);
 
         await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.CreateAdminUser, "USER_ID: " + user.Id);
@@ -104,21 +104,16 @@ internal sealed class UserService : IUserService
         return Result<ApplicationUser>.Success(user);
     }
 
-    public async Task<bool> CheckLoggedInUserPasswordAsync(string userName, string password)
+    public async Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
     {
         ApplicationUser user = await _userManager.FindByIdAsync(GetLoggedInUserId());
         if (user is null)
-            return false;
-
-        userName = userName.ToUpperInvariant();
-        if (user.UserName != _cookieService.GetCookie(CookieConstants.UserName) ||
-            user.NormalizedUserName != userName)
-            return false;
+            return (false, null);
 
         if (!await _userManager.CheckPasswordAsync(user, password))
-            return false;
+            return (false, null);
 
-        return true;
+        return (true, user);
     }
 
     public async Task<UserProfile> GetUserProfileByIdAsync(string userId)
@@ -149,6 +144,57 @@ internal sealed class UserService : IUserService
     {
         string id = GetLoggedInUserId();
         return GetUserProfileByIdAsync(id);
+    }
+
+    public async Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest)
+    {
+        Result<ApplicationUser> loggedInUserResult = await GetLoggedInUserAsync();
+        if (!loggedInUserResult.Succeeded)
+        {
+            Log.Warning("Failed to change password for logged in User, User not found");
+            return IdentityUserResult.Failed();
+        }
+
+        IdentityResult changePasswordResult = await _userManager.ChangePasswordAsync(loggedInUserResult.Data, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
+        if (changePasswordResult.Succeeded)
+        {
+            Log.Information("Changed Password for User {Email}", loggedInUserResult.Data.Email);
+            await _activityService.AddUserActivityAsync(loggedInUserResult.Data.Id, ActivityConstants.AuthChangePassword);
+        }
+
+        return new IdentityUserResult(changePasswordResult, loggedInUserResult.Data);
+    }
+
+    public async Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest)
+    {
+        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            Log.Warning("Failed to change password for {UserId}, User not found", userId);
+            return IdentityUserResult.Failed();
+        }
+
+        IdentityResult changePasswordResult = await _userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
+        if (changePasswordResult.Succeeded)
+        {
+            Log.Information("Changed Password for another User {Email}", user.Email);
+            await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.AuthChangeOtherPassword, "USER_ID: " + user.Id);
+        }
+
+        return new IdentityUserResult(changePasswordResult, user);
+    }
+
+    public async Task<Result<ApplicationUser>> GetLoggedInUserAsync()
+    {
+        string userId = GetLoggedInUserId();
+        if (userId is null)
+        {
+            Log.Warning("Failed to get the logged in User");
+            return Result<ApplicationUser>.Fail();
+        }
+
+        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        return Result<ApplicationUser>.Success(user);
     }
 
     public string GetLoggedInUserId()
