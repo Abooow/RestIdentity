@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.Constants;
@@ -8,26 +9,28 @@ using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Ip;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.IpInfo;
-using RestIdentity.Server.Services.ProfileImage;
-using RestIdentity.Server.Services.User;
 using Serilog;
 
 namespace RestIdentity.Server.Services.Activity;
 
 public sealed class ActivityService : IActivityService
 {
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _context;
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly IIpInfoService _ipInfoService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ICookieService _cookieService;
 
-    public ActivityService(ApplicationDbContext context,
+    public ActivityService(
+        UserManager<ApplicationUser> userManager,
+        ApplicationDbContext context,
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IIpInfoService ipInfoService,
         IServiceProvider serviceProvider,
         ICookieService cookieService)
     {
+        _userManager = userManager;
         _context = context;
         _dataProtectionKeys = dataProtectionKeys.Value;
         _ipInfoService = ipInfoService;
@@ -74,20 +77,32 @@ public sealed class ActivityService : IActivityService
         await AddUserActivityAsync(activity);
     }
 
-    public async Task<IEnumerable<ActivityModel>> GetPartialUserActivityAsync(string userId)
-
+    public async Task<(bool UserFound, IEnumerable<ActivityModel> UserActivities)> GetPartialUserActivitiesAsync(string userId)
     {
-        return await _context.Activities.Where(x => x.UserId == userId
-            && x.Type == ActivityConstants.AuthSignedIn)
+        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return (true, Array.Empty<ActivityModel>());
+
+        ActivityModel[] activities = await _context.Activities
+            .Where(x => x.UserId == userId && ActivityConstants.PartialActivityTypes.Contains(x.Type))
             .OrderBy(x => x.Date)
             .ToArrayAsync();
+
+        return (true, activities);
     }
 
-    public async Task<IEnumerable<ActivityModel>> GetFullUserActivityAsync(string userId)
+    public async Task<(bool UserFound, IEnumerable<ActivityModel> UserActivities)> GetFullUserActivitiesAsync(string userId)
     {
-        return await _context.Activities.Where(x => x.UserId == userId)
+        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return (false, Array.Empty<ActivityModel>());
+
+        ActivityModel[] activities = await _context.Activities
+            .Where(x => x.UserId == userId)
             .OrderBy(x => x.Date)
             .ToArrayAsync();
+
+        return (true, activities);
     }
 
     private async Task AddUserActivityAsync(ActivityModel activity)

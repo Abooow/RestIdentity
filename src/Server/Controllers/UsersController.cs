@@ -81,7 +81,7 @@ public sealed class UsersController : ControllerBase
         if (userId is null)
             return BadRequest(Result<IEnumerable<UserActivity>>.Fail(""));
 
-        IEnumerable<ActivityModel> activities = await _activityService.GetPartialUserActivityAsync(userId);
+        (_, IEnumerable<ActivityModel> activities) = await _activityService.GetPartialUserActivitiesAsync(userId);
 
         return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
     }
@@ -90,12 +90,14 @@ public sealed class UsersController : ControllerBase
     [HttpGet("activities/{id}")]
     public async Task<IActionResult> GetUserActivity(string id)
     {
-        IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivityAsync(id);
+        (bool userFound, IEnumerable<ActivityModel> activities) = await _activityService.GetFullUserActivitiesAsync(id);
 
-        return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
+        return userFound
+            ? Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)))
+            : BadRequest(Result<IEnumerable<UserActivity>>.Fail("User not found."));
     }
 
-    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
+    [Authorize]
     [HttpPost("update-myProfile")]
     public async Task<IActionResult> UpdateMyProfile(UpdateProfileRequest updateProfileRequest)
     {

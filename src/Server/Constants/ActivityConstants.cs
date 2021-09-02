@@ -13,4 +13,12 @@ internal static class ActivityConstants
     public const string CreateAdminUser = "CREATE.USER.ADMIN";
 
     public const string UserProfileUpdated = "USER.UPDATE.PROFILE";
+
+    public static readonly string[] PartialActivityTypes =
+    {
+        AuthRegistered,
+        AuthSignedIn,
+        AuthChangePassword,
+        UserProfileUpdated
+    };
 }
