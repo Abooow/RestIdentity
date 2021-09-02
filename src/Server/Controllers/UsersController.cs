@@ -41,7 +41,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("getMe")]
+    [HttpGet("me")]
     public async Task<IActionResult> GetMe()
     {
         PersonalUserProfile userProfile = await _userService.GetLoggedInUserProfileAsync();
@@ -52,7 +52,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpGet("getUserProfile/{userName}")]
+    [HttpGet("profiles/{userName}")]
     public async Task<IActionResult> GetUserProfile(string userName)
     {
         UserProfile userProfile = await _userService.GetUserProfileByNameAsync(userName);
@@ -63,7 +63,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
-    [HttpGet("getUser/{id}")]
+    [HttpGet("full-profiles/{id}")]
     public async Task<IActionResult> GetUser(string id)
     {
         PersonalUserProfile userProfile = await _userService.GetUserProfileByIdAsync(id);
@@ -74,7 +74,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("getMyActivity")]
+    [HttpGet("my-activity")]
     public async Task<IActionResult> GetMyActivity()
     {
         string userId = _userService.GetLoggedInUserId();
@@ -87,7 +87,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
-    [HttpGet("getUserActivity/{id}")]
+    [HttpGet("activities/{id}")]
     public async Task<IActionResult> GetUserActivity(string id)
     {
         IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivityAsync(id);
