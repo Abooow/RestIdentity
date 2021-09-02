@@ -107,23 +107,26 @@ internal sealed class UserService : IUserService
     public async Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
     {
         ApplicationUser user = await _userManager.FindByIdAsync(GetLoggedInUserId());
-        if (user is null)
-            return (false, null);
-
-        if (!await _userManager.CheckPasswordAsync(user, password))
+        if (user is null || !await _userManager.CheckPasswordAsync(user, password))
             return (false, null);
 
         return (true, user);
     }
 
-    public async Task<UserProfile> GetUserProfileByIdAsync(string userId)
+    public Task<PersonalUserProfile> GetLoggedInUserProfileAsync()
+    {
+        string id = GetLoggedInUserId();
+        return GetUserProfileByIdAsync(id);
+    }
+
+    public async Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId)
     {
         ApplicationUser user = await _userManager.FindByIdAsync(userId);
         if (user is null)
             return null;
 
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
-        var userProfile = new UserProfile(
+        var userProfile = new PersonalUserProfile(
             user.ProfilePictureUrl,
             user.Email,
             user.UserName,
@@ -140,10 +143,22 @@ internal sealed class UserService : IUserService
         return userProfile;
     }
 
-    public Task<UserProfile> GetLoggedInUserProfileAsync()
+    public async Task<UserProfile> GetUserProfileByNameAsync(string userName)
     {
-        string id = GetLoggedInUserId();
-        return GetUserProfileByIdAsync(id);
+        ApplicationUser user = await _userManager.FindByNameAsync(userName);
+        if (user is null)
+            return null;
+
+        IList<string> userRoles = await _userManager.GetRolesAsync(user);
+        var userProfile = new UserProfile(
+            user.ProfilePictureUrl,
+            user.UserName,
+            user.FirstName,
+            user.LastName,
+            user.DateCreated,
+            userRoles);
+
+        return userProfile;
     }
 
     public async Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest)

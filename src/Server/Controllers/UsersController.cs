@@ -43,10 +43,21 @@ public sealed class UsersController : ControllerBase
     [HttpGet("getMe")]
     public async Task<IActionResult> GetMe()
     {
-        UserProfile userProfile = await _userService.GetLoggedInUserProfileAsync();
+        PersonalUserProfile userProfile = await _userService.GetLoggedInUserProfileAsync();
 
         return userProfile is null
-            ? Unauthorized(Result<UserProfile>.Fail("Could not get User.").AsUnauthorized())
+            ? Unauthorized(Result<PersonalUserProfile>.Fail("Could not get User.").AsUnauthorized())
+            : Ok(Result<PersonalUserProfile>.Success(userProfile));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("getUserProfile/{userName}")]
+    public async Task<IActionResult> GetUserProfile(string userName)
+    {
+        UserProfile userProfile = await _userService.GetUserProfileByNameAsync(userName);
+
+        return userProfile is null
+            ? NotFound(Result<UserProfile>.Fail("Could not find User.").AsNotFound())
             : Ok(Result<UserProfile>.Success(userProfile));
     }
 
@@ -54,11 +65,11 @@ public sealed class UsersController : ControllerBase
     [HttpGet("getUser/{id}")]
     public async Task<IActionResult> GetUser(string id)
     {
-        UserProfile userProfile = await _userService.GetUserProfileByIdAsync(id);
+        PersonalUserProfile userProfile = await _userService.GetUserProfileByIdAsync(id);
 
         return userProfile is null
-            ? NotFound(Result<UserProfile>.Fail("Could not find User.").AsNotFound())
-            : Ok(Result<UserProfile>.Success(userProfile));
+            ? NotFound(Result<PersonalUserProfile>.Fail("Could not find User.").AsNotFound())
+            : Ok(Result<PersonalUserProfile>.Success(userProfile));
     }
 
     [Authorize]
@@ -66,9 +77,12 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> GetMyActivity()
     {
         string userId = _userService.GetLoggedInUserId();
+        if (userId is null)
+            return BadRequest(Result<IEnumerable<UserActivity>>.Fail(""));
+
         IEnumerable<ActivityModel> activities = await _activityService.GetPartialUserActivityAsync(userId);
 
-        return Ok(MapActivities(activities));
+        return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
     }
 
     [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
@@ -77,7 +91,7 @@ public sealed class UsersController : ControllerBase
     {
         IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivityAsync(id);
 
-        return Ok(MapActivities(activities));
+        return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
     }
 
     private static IEnumerable<UserActivity> MapActivities(IEnumerable<ActivityModel> activities)
