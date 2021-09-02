@@ -17,6 +17,8 @@ public interface IUserService
     Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId);
     Task<UserProfile> GetUserProfileByNameAsync(string userName);
 
+    Task<IdentityUserResult> UpdateSignedInUserProfileAsync(UpdateProfileRequest updateProfileRequest);
+
     Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest);
     Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest);
 

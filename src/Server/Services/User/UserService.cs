@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.Constants;
@@ -104,13 +105,9 @@ internal sealed class UserService : IUserService
         return Result<ApplicationUser>.Success(user);
     }
 
-    public async Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
+    public Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(GetLoggedInUserId());
-        if (user is null || !await _userManager.CheckPasswordAsync(user, password))
-            return (false, null);
-
-        return (true, user);
+        return CheckUserPasswordAsync(GetLoggedInUserId(), password);
     }
 
     public Task<PersonalUserProfile> GetLoggedInUserProfileAsync()
@@ -159,6 +156,35 @@ internal sealed class UserService : IUserService
             userRoles);
 
         return userProfile;
+    }
+
+    public async Task<IdentityUserResult> UpdateSignedInUserProfileAsync(UpdateProfileRequest updateProfileRequest)
+    {
+        (bool passwordCheckSucceeded, ApplicationUser user) = await CheckLoggedInUserPasswordAsync(updateProfileRequest.Password);
+        if (!passwordCheckSucceeded)
+        {
+            Log.Information("Failed to Update user profile");
+            return new IdentityUserResult(IdentityResult.Failed(new IdentityError() { Description = "Invalid Password." }));
+        }
+
+        if (updateProfileRequest.FirstName is null && updateProfileRequest.LastName is null)
+        {
+            Log.Information("User {Email} did not have anything to update", user.Email);
+            return new IdentityUserResult(IdentityResult.Success, user);
+        }
+
+        string oldProfile = JsonSerializer.Serialize(new { user.FirstName, user.LastName });
+
+        if (updateProfileRequest.FirstName is not null)
+            user.FirstName = updateProfileRequest.FirstName;
+        if (updateProfileRequest.LastName is not null)
+            user.LastName = updateProfileRequest.LastName;
+        IdentityResult updateProfileResult = await _userManager.UpdateAsync(user);
+
+        Log.Information("User profile for user {Email} has been updated", user.Email);
+        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.UserProfileUpdated, $"OLD_PROFILE: {oldProfile}");
+
+        return new IdentityUserResult(updateProfileResult, user);
     }
 
     public async Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest)
@@ -228,5 +254,14 @@ internal sealed class UserService : IUserService
         }
 
         return null;
+    }
+
+    private async Task<(bool Success, ApplicationUser User)> CheckUserPasswordAsync(string id, string password)
+    {
+        ApplicationUser user = await _userManager.FindByIdAsync(id);
+        if (user is null || !await _userManager.CheckPasswordAsync(user, password))
+            return (false, null);
+
+        return (true, user);
     }
 }

@@ -8,6 +8,7 @@ using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Models;
+using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 
@@ -92,6 +93,17 @@ public sealed class UsersController : ControllerBase
         IEnumerable<ActivityModel> activities = await _activityService.GetFullUserActivityAsync(id);
 
         return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
+    }
+
+    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
+    [HttpPost("update-myProfile")]
+    public async Task<IActionResult> UpdateMyProfile(UpdateProfileRequest updateProfileRequest)
+    {
+        IdentityUserResult updateProfileResult = await _userService.UpdateSignedInUserProfileAsync(updateProfileRequest);
+
+        return updateProfileResult.Succeeded
+            ? Ok(Result.Success())
+            : BadRequest(Result.Fail(updateProfileResult.Errors.Select(x => x.Description)));
     }
 
     private static IEnumerable<UserActivity> MapActivities(IEnumerable<ActivityModel> activities)
