@@ -5,10 +5,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using RestIdentity.Server.BackgroundServices;
+using RestIdentity.Server.BackgroundServices.Channels;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
+using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
@@ -97,6 +100,12 @@ public sealed class Startup
         services.AddTransient<IUserService, UserService>();
         services.AddTransient<IProfileImageService, ProfileImageService>();
 
+        var fileStorageOptionsSection = Configuration.GetSection(nameof(FileStorageOptions));
+        services.Configure<FileStorageOptions>(fileStorageOptionsSection);
+
+        var profileImageOptionsSection = Configuration.GetSection(nameof(ProfileImageDefaultOptions));
+        services.Configure<ProfileImageDefaultOptions>(profileImageOptionsSection);
+
         services.AddHttpContextAccessor();
         services.AddTransient<ICookieService, CookieService>();
 
@@ -125,6 +134,12 @@ public sealed class Startup
         services.AddTransient<IFunctionalService, FunctionalService>();
         services.Configure<AdminUserOptions>(Configuration.GetSection("DefaultUserOptions:Admin"));
         services.Configure<CustomerUserOptions>(Configuration.GetSection("DefaultUserOptions:Customer"));
+
+        // Channels.
+        services.AddSingleton<ProfileImageChannel>();
+
+        // Background Services.
+        services.AddHostedService<ProfileImageDispatcher>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

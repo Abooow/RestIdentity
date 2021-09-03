@@ -74,6 +74,17 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("upload-profileImage")]
+    public async Task<IActionResult> UploadProfileImage()
+    {
+        PersonalUserProfile userProfile = await _userService.GetLoggedInUserProfileAsync();
+
+        return userProfile is null
+            ? Unauthorized(Result<PersonalUserProfile>.Fail("Could not get User.").AsUnauthorized())
+            : Ok(Result<PersonalUserProfile>.Success(userProfile));
+    }
+
+    [Authorize]
     [HttpGet("my-activity")]
     public async Task<IActionResult> GetMyActivity()
     {

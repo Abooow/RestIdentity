@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="8.2.1" />
+    <PackageReference Include="Magick.NET.Core" Version="8.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.0-preview.5.21301.17" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="5.0.9" />
@@ -19,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RestIdentity.Logging\RestIdentity.Logging.csproj" />
     <ProjectReference Include="..\Client\RestIdentity.Client.csproj" />
+    <ProjectReference Include="..\Logging\RestIdentity.Logging.csproj" />
     <ProjectReference Include="..\Shared\RestIdentity.Shared.csproj" />
   </ItemGroup>
 
