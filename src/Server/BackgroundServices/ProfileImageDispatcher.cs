@@ -27,7 +27,7 @@ internal sealed class ProfileImageDispatcher : BackgroundService
                 ProfileImageChannelModel profileImageModel = await _profileImageChannel.ReadAsync(stoppingToken);
 
                 _logger.LogInformation("ProfileImage received with Id: {id}, waiting for processing...", profileImageModel.Id);
-                await _profileImageService.Upload(profileImageModel);
+                await _profileImageService.CreateFromChannelAsync(profileImageModel);
 
                 _logger.LogInformation("ProfileImage with Id: {id} has completed processing successfully", profileImageModel.Id);
             }
