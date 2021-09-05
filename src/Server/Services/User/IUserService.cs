@@ -22,6 +22,6 @@ public interface IUserService
     Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest);
     Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest);
 
-    Task<Result<ApplicationUser>> GetLoggedInUserAsync();
-    string GetLoggedInUserId();
+    string GetSignedInUserId();
+    Task<ApplicationUser> GetSignedInUserAsync();
 }

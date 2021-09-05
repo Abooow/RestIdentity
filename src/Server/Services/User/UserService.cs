@@ -1,14 +1,11 @@
 ﻿using System.Text.Json;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
-using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.ProfileImage;
+using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Wrapper;
@@ -19,29 +16,18 @@ namespace RestIdentity.Server.Services.User;
 internal sealed class UserService : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ApplicationDbContext _context;
-    private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IWebHostEnvironment _hostEnvironment;
-    private readonly ICookieService _cookieService;
+    private readonly ISignedInUserService _signedInUserInfoService;
     private readonly IActivityService _activityService;
     private readonly IProfileImageService _profileImageService;
 
-    public UserService(UserManager<ApplicationUser> userManager,
-        ApplicationDbContext context,
-        IOptions<DataProtectionKeys> dataProtectionKeys,
-        IServiceProvider serviceProvider,
-        IWebHostEnvironment hostEnvironment,
-        ICookieService cookieService,
+    public UserService(
+        UserManager<ApplicationUser> userManager,
+        ISignedInUserService signedInUserInfoService,
         IActivityService activityService,
         IProfileImageService profileImageService)
     {
         _userManager = userManager;
-        _context = context;
-        _dataProtectionKeys = dataProtectionKeys.Value;
-        _serviceProvider = serviceProvider;
-        _hostEnvironment = hostEnvironment;
-        _cookieService = cookieService;
+        _signedInUserInfoService = signedInUserInfoService;
         _activityService = activityService;
         _profileImageService = profileImageService;
     }
@@ -73,7 +59,7 @@ internal sealed class UserService : IUserService
 
     public async Task<Result<ApplicationUser>> RegisterAdminUserAsync(RegisterRequest registerRequest)
     {
-        ApplicationUser signedInUser = await _userManager.FindByIdAsync(GetLoggedInUserId());
+        ApplicationUser signedInUser = await GetSignedInUserAsync();
         if (signedInUser is null)
             return Result<ApplicationUser>.Fail("Not Authorized.").AsUnauthorized();
 
@@ -107,12 +93,12 @@ internal sealed class UserService : IUserService
 
     public Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
     {
-        return CheckUserPasswordAsync(GetLoggedInUserId(), password);
+        return CheckUserPasswordAsync(GetSignedInUserId(), password);
     }
 
     public Task<PersonalUserProfile> GetLoggedInUserProfileAsync()
     {
-        string id = GetLoggedInUserId();
+        string id = GetSignedInUserId();
         return GetUserProfileByIdAsync(id);
     }
 
@@ -189,21 +175,21 @@ internal sealed class UserService : IUserService
 
     public async Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest)
     {
-        Result<ApplicationUser> loggedInUserResult = await GetLoggedInUserAsync();
-        if (!loggedInUserResult.Succeeded)
+        ApplicationUser loggedInUserResult = await GetSignedInUserAsync();
+        if (loggedInUserResult is null)
         {
             Log.Warning("Failed to change password for logged in User, User not found");
             return IdentityUserResult.Failed();
         }
 
-        IdentityResult changePasswordResult = await _userManager.ChangePasswordAsync(loggedInUserResult.Data, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
+        IdentityResult changePasswordResult = await _userManager.ChangePasswordAsync(loggedInUserResult, changePasswordRequest.OldPassword, changePasswordRequest.NewPassword);
         if (changePasswordResult.Succeeded)
         {
-            Log.Information("Changed Password for User {Email}", loggedInUserResult.Data.Email);
-            await _activityService.AddUserActivityAsync(loggedInUserResult.Data.Id, ActivityConstants.AuthChangePassword);
+            Log.Information("Changed Password for User {Email}", loggedInUserResult.Email);
+            await _activityService.AddUserActivityAsync(loggedInUserResult.Id, ActivityConstants.AuthChangePassword);
         }
 
-        return new IdentityUserResult(changePasswordResult, loggedInUserResult.Data);
+        return new IdentityUserResult(changePasswordResult, loggedInUserResult);
     }
 
     public async Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest)
@@ -225,35 +211,14 @@ internal sealed class UserService : IUserService
         return new IdentityUserResult(changePasswordResult, user);
     }
 
-    public async Task<Result<ApplicationUser>> GetLoggedInUserAsync()
+    public string GetSignedInUserId()
     {
-        string userId = GetLoggedInUserId();
-        if (userId is null)
-        {
-            Log.Warning("Failed to get the logged in User");
-            return Result<ApplicationUser>.Fail();
-        }
-
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
-        return Result<ApplicationUser>.Success(user);
+        return _signedInUserInfoService.GetUserId();
     }
 
-    public string GetLoggedInUserId()
+    public Task<ApplicationUser> GetSignedInUserAsync()
     {
-        try
-        {
-            var protectorProvider = _serviceProvider.GetService<IDataProtectionProvider>();
-            IDataProtector protector = protectorProvider.CreateProtector(_dataProtectionKeys.ApplicationUserKey);
-
-            return protector.Unprotect(_cookieService.GetCookie(CookieConstants.UserId));
-        }
-        catch (Exception e)
-        {
-            Log.Error("An error occurred while trying to get user_id from cookies {Error} {StackTrace} {InnerExeption} {Source}",
-                e.Message, e.StackTrace, e.InnerException, e.Source);
-        }
-
-        return null;
+        return _signedInUserInfoService.GetUserAsync();
     }
 
     private async Task<(bool Success, ApplicationUser User)> CheckUserPasswordAsync(string id, string password)

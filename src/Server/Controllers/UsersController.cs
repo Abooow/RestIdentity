@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
-using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
@@ -20,24 +18,13 @@ public sealed class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IActivityService _activityService;
-    private readonly ICookieService _cookieService;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly JwtSettings _jwtSettings;
 
-    public UsersController(IUserService userService,
-        IActivityService activityService,
-        ICookieService cookieService,
-        IServiceProvider serviceProvider,
-        IOptions<DataProtectionKeys> dataProtectionKeys,
-        IOptions<JwtSettings> jwtSettings)
+    public UsersController(
+        IUserService userService,
+        IActivityService activityService)
     {
         _userService = userService;
         _activityService = activityService;
-        _cookieService = cookieService;
-        _serviceProvider = serviceProvider;
-        _dataProtectionKeys = dataProtectionKeys.Value;
-        _jwtSettings = jwtSettings.Value;
     }
 
     [Authorize]
@@ -77,7 +64,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("my-activity")]
     public async Task<IActionResult> GetMyActivity()
     {
-        string userId = _userService.GetLoggedInUserId();
+        string userId = _userService.GetSignedInUserId();
         if (userId is null)
             return BadRequest(Result<IEnumerable<UserActivity>>.Fail(""));
 

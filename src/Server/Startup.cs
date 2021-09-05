@@ -20,6 +20,7 @@ using RestIdentity.Server.Services.FunctionalServices;
 using RestIdentity.Server.Services.Handlers;
 using RestIdentity.Server.Services.IpInfo;
 using RestIdentity.Server.Services.ProfileImage;
+using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Wrapper;
 
@@ -98,6 +99,7 @@ public sealed class Startup
         services.AddTransient<IActivityService, ActivityService>();
 
         services.AddTransient<IUserService, UserService>();
+        services.AddTransient<ISignedInUserService, SignedInUserService>();
         services.AddTransient<IProfileImageService, ProfileImageService>();
 
         var fileStorageOptionsSection = Configuration.GetSection(nameof(FileStorageOptions));

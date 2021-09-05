@@ -1,7 +1,6 @@
 ﻿using System.Drawing.Drawing2D;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Services.ProfileImage;
 using RestIdentity.Shared.Wrapper;
@@ -25,7 +24,7 @@ public class AvatarsController : ControllerBase
     public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string interpolation)
     {
         if (file is null)
-            return BadRequest(Result<ProfileImageChannelModel>.Fail("No file was attached.").WithDescription(StatusCodeDescriptions.FileNotFound));
+            return BadRequest(Result<ProfileImageChannelModel>.Fail("No file attached.").WithDescription(StatusCodeDescriptions.FileNotFound));
 
         if (!Enum.TryParse(interpolation, out InterpolationMode interpolationMode) || interpolationMode == InterpolationMode.Invalid)
             interpolationMode = InterpolationMode.HighQualityBicubic;

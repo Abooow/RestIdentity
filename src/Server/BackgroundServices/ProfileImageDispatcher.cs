@@ -7,13 +7,13 @@ namespace RestIdentity.Server.BackgroundServices;
 internal sealed class ProfileImageDispatcher : BackgroundService
 {
     private readonly ILogger<ProfileImageDispatcher> _logger;
-    private readonly IProfileImageService _profileImageService;
+    private readonly IServiceProvider _provider;
     private readonly ProfileImageChannel _profileImageChannel;
 
-    public ProfileImageDispatcher(ILogger<ProfileImageDispatcher> logger, IProfileImageService profileImageService, ProfileImageChannel profileImageChannel)
+    public ProfileImageDispatcher(ILogger<ProfileImageDispatcher> logger, IServiceProvider provider, ProfileImageChannel profileImageChannel)
     {
         _logger = logger;
-        _profileImageService = profileImageService;
+        _provider = provider;
         _profileImageChannel = profileImageChannel;
     }
 
@@ -27,7 +27,11 @@ internal sealed class ProfileImageDispatcher : BackgroundService
                 ProfileImageChannelModel profileImageModel = await _profileImageChannel.ReadAsync(stoppingToken);
 
                 _logger.LogInformation("ProfileImage received with Id: {id}, waiting for processing...", profileImageModel.Id);
-                await _profileImageService.CreateFromChannelAsync(profileImageModel);
+                using (IServiceScope scope = _provider.CreateScope())
+                {
+                    var profileImageService = scope.ServiceProvider.GetRequiredService<IProfileImageService>();
+                    await profileImageService.CreateFromChannelAsync(profileImageModel);
+                }
 
                 _logger.LogInformation("ProfileImage with Id: {id} has completed processing successfully", profileImageModel.Id);
             }

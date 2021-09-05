@@ -2,45 +2,33 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using ImageMagick;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.BackgroundServices.Channels;
-using RestIdentity.Server.Constants;
-using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.Cookies;
-using RestIdentity.Server.Services.User;
+using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
-using Serilog;
 
 namespace RestIdentity.Server.Services.ProfileImage;
 
 internal sealed class ProfileImageService : IProfileImageService
 {
+    private readonly ISignedInUserService _signedInUserService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly ProfileImageChannel _profileImageChannel;
     private readonly ProfileImageDefaultOptions _profileImageOptions;
 
-    private readonly ICookieService _cookieService;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly DataProtectionKeys _dataProtectionKeys;
-
     public ProfileImageService(
+        ISignedInUserService signedInUserService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<ProfileImageDefaultOptions> profileImageOptions,
-        ProfileImageChannel profileImageChannel,
-        ICookieService cookieService,
-        IServiceProvider serviceProvider,
-        IOptions<DataProtectionKeys> dataProtectionKeys)
+        ProfileImageChannel profileImageChannel)
     {
+        _signedInUserService = signedInUserService;
         _fileStorageOptions = fileStorageOptions.Value;
         _profileImageOptions = profileImageOptions.Value;
         _profileImageChannel = profileImageChannel;
-        _cookieService = cookieService;
-        _serviceProvider = serviceProvider;
-        _dataProtectionKeys = dataProtectionKeys.Value;
     }
 
     public Task<string> CreateDefaultProfileImageAsync(ApplicationUser user)
@@ -67,7 +55,7 @@ internal sealed class ProfileImageService : IProfileImageService
         using FileStream tempFileStream = File.Create(tempFilePath);
         file.CopyTo(tempFileStream);
 
-        string userId = GetLoggedInUserId();
+        string userId = _signedInUserService.GetUserId();
         ProfileImageChannelModel data = WriteToProfileImageChannel(file, userId, tempFilePath, interpolationMode);
         return Result<ProfileImageChannelModel>.Success(data, "Image uploaded successfully, your profile image will update shortly.");
     }
@@ -150,24 +138,6 @@ internal sealed class ProfileImageService : IProfileImageService
     private bool IsContentTypeAllowed(string contentType)
     {
         return _profileImageOptions.AllowedFileExtensions.Contains(contentType, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private string GetLoggedInUserId()
-    {
-        try
-        {
-            var protectorProvider = _serviceProvider.GetService<IDataProtectionProvider>();
-            IDataProtector protector = protectorProvider.CreateProtector(_dataProtectionKeys.ApplicationUserKey);
-
-            return protector.Unprotect(_cookieService.GetCookie(CookieConstants.UserId));
-        }
-        catch (Exception e)
-        {
-            Log.Error("An error occurred while trying to get user_id from cookies {Error} {StackTrace} {InnerExeption} {Source}",
-                e.Message, e.StackTrace, e.InnerException, e.Source);
-        }
-
-        return null;
     }
 
     private ProfileImageChannelModel WriteToProfileImageChannel(IFormFile file, string userId, string tempFilePath, InterpolationMode interpolationMode)
