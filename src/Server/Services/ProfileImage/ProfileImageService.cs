@@ -36,6 +36,24 @@ internal sealed class ProfileImageService : IProfileImageService
         return Task.FromResult(string.Empty);
     }
 
+    public (string Location, string ActualContentType) GetPhysicalFileLocation(string userNameHash, string contentType, int? size)
+    {
+        string userFolderPath = @$"{_fileStorageOptions.UserProfileImagesPath}\{userNameHash}";
+
+        if (!Directory.Exists(userFolderPath))
+            throw new FileNotFoundException();
+
+        string acualFileType = GetFileExtensionInDirectory(userFolderPath);
+        contentType = contentType == string.Empty
+            ? acualFileType == "png" ? _profileImageOptions.DefaultImageExtension : _profileImageOptions.DefaultGifExtension
+            : contentType[1..];
+
+        EnsureContentTypeIsAllowed(contentType);
+        int validSize = GetValidSizeForFileType(size, acualFileType);
+
+        return ($@"{userFolderPath}\profileImage{validSize}.{acualFileType}", contentType);
+    }
+
     public async Task<Result<ProfileImageChannelModel>> UploadProfileImageForSignedInUserAsync(IFormFile file, InterpolationMode interpolationMode)
     {
         if (GifFileIsTooLarge(file))

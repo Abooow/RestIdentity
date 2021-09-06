@@ -19,6 +19,24 @@ public class AvatarsController : ControllerBase
         _profileImageService = profileImageService;
     }
 
+    [AllowAnonymous]
+    [HttpGet("{url}")]
+    public IActionResult GetProfileImage(string url, [FromQuery] int? size)
+    {
+        try
+        {
+            string userNameHash = Path.GetFileNameWithoutExtension(url);
+            string contentType = Path.GetExtension(url);
+            (string filePath, string acualContentType) = _profileImageService.GetPhysicalFileLocation(userNameHash, contentType, size);
+
+            return PhysicalFile(filePath, $"image/{acualContentType}");
+        }
+        catch (Exception e)
+        {
+            return BadRequest();
+        }
+    }
+
     [Authorize]
     [HttpPost("upload")]
     public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string interpolation)
