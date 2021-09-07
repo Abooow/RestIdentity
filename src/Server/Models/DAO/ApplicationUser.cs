@@ -16,9 +16,9 @@ public sealed class ApplicationUser : IdentityUser
     public string LastName { get; set; }
 
     [Required]
-    [MaxLength(200)]
-    [Column(TypeName = "varchar(200)")]
-    public string ProfilePictureUrl { get; set; }
+    [MaxLength(40)]
+    [Column(TypeName = "varchar(40)")]
+    public string ProfilePicHash { get; set; }
 
     public DateTime DateCreated { get; set; }
 }

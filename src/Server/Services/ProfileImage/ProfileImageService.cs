@@ -1,44 +1,76 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Security.Cryptography;
+using System.Text;
 using ImageMagick;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.BackgroundServices.Channels;
+using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
+using Serilog;
 
 namespace RestIdentity.Server.Services.ProfileImage;
 
 internal sealed class ProfileImageService : IProfileImageService
 {
+    private readonly ApplicationDbContext _dbContext;
     private readonly ISignedInUserService _signedInUserService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly ProfileImageChannel _profileImageChannel;
     private readonly ProfileImageDefaultOptions _profileImageOptions;
 
     public ProfileImageService(
+        ApplicationDbContext dbContext,
         ISignedInUserService signedInUserService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<ProfileImageDefaultOptions> profileImageOptions,
         ProfileImageChannel profileImageChannel)
     {
+        _dbContext = dbContext;
         _signedInUserService = signedInUserService;
         _fileStorageOptions = fileStorageOptions.Value;
         _profileImageOptions = profileImageOptions.Value;
         _profileImageChannel = profileImageChannel;
+        _dbContext = dbContext;
     }
 
-    public Task<string> CreateDefaultProfileImageAsync(ApplicationUser user)
+    public async Task CreateDefaultProfileImageAsync(ApplicationUser user)
     {
-        return Task.FromResult(string.Empty);
+        string userIdHash = HashUserId(user.Id);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            user.ProfilePicHash = userIdHash;
+            _dbContext.Update(user);
+
+            CreateDefaultProfileImages(user, userIdHash);
+
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception e)
+        {
+            Log.Error("An error occurred while creating default user profile for user {Id}. {Error} {StackTrace} {InnerException} {Source}",
+                user.Id, e.Message, e.StackTrace, e.InnerException, e.Source);
+
+            await transaction.RollbackAsync();
+
+            string userDirectory = $@"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
+            if (Directory.Exists(userDirectory))
+                Directory.Delete(userDirectory, true);
+        }
     }
 
-    public (string Location, string ActualContentType) GetPhysicalFileLocation(string userNameHash, string contentType, int? size)
+    public (string Location, string ActualContentType) GetPhysicalFileLocation(string userIdHash, string contentType, int? size)
     {
-        string userFolderPath = @$"{_fileStorageOptions.UserProfileImagesPath}\{userNameHash}";
+        string userFolderPath = @$"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
 
         if (!Directory.Exists(userFolderPath))
             throw new FileNotFoundException();
@@ -118,6 +150,30 @@ internal sealed class ProfileImageService : IProfileImageService
         File.Delete(profileImage.TempFilePath);
     }
 
+    private static Image CreateTextProfileImage(string userInitials, int size, Color backgroundColor)
+    {
+        var tempImage = new Bitmap(1, 1);
+        var drawing = Graphics.FromImage(tempImage);
+
+        tempImage.Dispose();
+        drawing.Dispose();
+
+        var img = new Bitmap(size, size);
+        var imgCanvas = Graphics.FromImage(img);
+        imgCanvas.Clear(backgroundColor);
+
+        using var textBrush = new SolidBrush(Color.White);
+        using var centerStringFormat = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+
+        using var arialFont = new Font("Arial", 24 * size / 64);
+        imgCanvas.DrawString(userInitials, arialFont, textBrush, new PointF(size / 2f, size / 2f), centerStringFormat);
+
+        imgCanvas.Save();
+        imgCanvas.Dispose();
+
+        return img;
+    }
+
     private static Result<ProfileImageChannelModel> CreateFileTooLargeResult(string type, long maxSize, long actualSize)
     {
         return Result<ProfileImageChannelModel>.Fail($"{type} is too large. Maximum is {maxSize / 1000000f:0.0}MB ({maxSize} bytes), but it was {actualSize} bytes")
@@ -151,6 +207,32 @@ internal sealed class ProfileImageService : IProfileImageService
         }
 
         File.Create($@"{savePath}\gif_type.dbl").Dispose();
+    }
+
+    private static string HashUserId(string userId)
+    {
+        using var sha1 = SHA1.Create();
+        byte[] hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(userId));
+        string userIdHash = string.Concat(hash.Select(x => x.ToString("x2")));
+
+        return userIdHash;
+    }
+
+    private void CreateDefaultProfileImages(ApplicationUser user, string userIdHash)
+    {
+        int userNameHashCode = Math.Abs(user.UserName.GetHashCode());
+        Color backgroundColor = ImageUtilities.ColorFromHSV(userNameHashCode % 360, 75 / 100f, 75 / 100f);
+        string userInitials = $"{user.FirstName[0]}{user.LastName[0]}";
+
+        string userDirectory = $@"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
+        Directory.CreateDirectory(userDirectory);
+
+        foreach (int size in _profileImageOptions.ImageSizes)
+        {
+            string filePath = $@"{userDirectory}\profileImage{size}.{_profileImageOptions.DefaultImageExtension}";
+            using Image profileImage = CreateTextProfileImage(userInitials, size, backgroundColor);
+            profileImage.Save(filePath);
+        }
     }
 
     private bool IsContentTypeAllowed(string contentType)

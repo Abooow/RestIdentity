@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.BackgroundServices;
@@ -136,6 +137,8 @@ public sealed class Startup
         services.AddTransient<IFunctionalService, FunctionalService>();
         services.Configure<AdminUserOptions>(Configuration.GetSection("DefaultUserOptions:Admin"));
         services.Configure<CustomerUserOptions>(Configuration.GetSection("DefaultUserOptions:Customer"));
+
+        services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
         // Channels.
         services.AddSingleton<ProfileImageChannel>();
