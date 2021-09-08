@@ -106,6 +106,10 @@ public sealed class Startup
         var fileStorageOptionsSection = Configuration.GetSection(nameof(FileStorageOptions));
         services.Configure<FileStorageOptions>(fileStorageOptionsSection);
 
+        var fileStorageOptions = fileStorageOptionsSection.Get<FileStorageOptions>();
+        Directory.CreateDirectory(fileStorageOptions.UserProfileImagesPath);
+        Directory.CreateDirectory(fileStorageOptions.TempFilesPath);
+
         var profileImageOptionsSection = Configuration.GetSection(nameof(ProfileImageDefaultOptions));
         services.Configure<ProfileImageDefaultOptions>(profileImageOptionsSection);
 

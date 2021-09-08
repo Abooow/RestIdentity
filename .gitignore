@@ -6,6 +6,10 @@
 # Custom files
 [Ee]mails.txt
 
+# Custom folders
+[Pp]rofileImages/
+[Tt]emp/
+
 # User-specific files
 *.rsuser
 *.suo
