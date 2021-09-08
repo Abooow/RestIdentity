@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
+using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
@@ -27,24 +28,24 @@ public sealed class Startup
         services.AddSqlServerDatabase(Configuration.GetConnectionString("DefaultConnection"));
 
         // Identity User
-        IdentityDefaultOptions identityOptions = services.ConfigureDefaultIdentityOptions(Configuration);
+        IdentityDefaultOptions identityOptions = services.ConfigureDefaultIdentityOptions(Configuration, nameof(IdentityDefaultOptions));
         services.AddUserIdentity(identityOptions);
-        services.ConfigureDefaultAdminAndCustomerOptions(Configuration);
+        services.ConfigureDefaultAdminAndCustomerOptions(Configuration, "DefaultUserOptions:Admin", "DefaultUserOptions:Customer");
 
         // Data Protection Keys.
-        services.ConfigureDataProtectionKeys(Configuration);
+        services.ConfigureDataProtectionKeys(Configuration, nameof(DataProtectionKeys));
         services.AddDataProtectionKeys(Configuration.GetConnectionString("DataProtectionKeysConnection"));
 
         // JWT Authentication.
-        JwtSettings jwtSettings = services.ConfigureJwtSettings(Configuration);
+        JwtSettings jwtSettings = services.ConfigureJwtSettings(Configuration, nameof(JwtSettings));
         services.AddJwtAuthentication(jwtSettings);
         services.AddAdminSchemeAuthentication();
 
         // File Storage.
-        services.ConfigureFileStorageOptions(Configuration);
+        services.ConfigureFileStorageOptions(Configuration, nameof(FileStorageOptions));
 
         // Profile Image Options.
-        services.ConfigureProfileImageOptions(Configuration);
+        services.ConfigureProfileImageOptions(Configuration, nameof(ProfileImageDefaultOptions));
 
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IActivityService, ActivityService>();

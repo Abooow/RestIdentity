@@ -5,43 +5,44 @@ namespace RestIdentity.Server.Extensions;
 
 internal static class ServiceCollectionConfigurationExtensions
 {
-    public static IdentityDefaultOptions ConfigureDefaultIdentityOptions(this IServiceCollection services, IConfiguration configuration)
+    public static IdentityDefaultOptions ConfigureDefaultIdentityOptions(this IServiceCollection services, IConfiguration configuration, string identityOptionsSectionKey)
     {
-        IConfigurationSection identityDefaultOptionsConfiguration = configuration.GetSection(nameof(IdentityDefaultOptions));
+        IConfigurationSection identityDefaultOptionsConfiguration = configuration.GetSection(identityOptionsSectionKey);
         services.Configure<IdentityDefaultOptions>(identityDefaultOptionsConfiguration);
 
         return identityDefaultOptionsConfiguration.Get<IdentityDefaultOptions>();
     }
 
-    public static (AdminUserOptions, CustomerUserOptions) ConfigureDefaultAdminAndCustomerOptions(this IServiceCollection services, IConfiguration configuration)
+    public static (AdminUserOptions, CustomerUserOptions) ConfigureDefaultAdminAndCustomerOptions(
+        this IServiceCollection services, IConfiguration configuration, string adminOptionsSectionKey, string customerOptionsSectionKey)
     {
-        IConfigurationSection adminOptionsConfiguration = configuration.GetSection("DefaultUserOptions:Admin");
-        IConfigurationSection customerOptionsConfiguration = configuration.GetSection("DefaultUserOptions:Customer");
-        services.Configure<AdminUserOptions>(configuration.GetSection("DefaultUserOptions:Admin"));
-        services.Configure<CustomerUserOptions>(configuration.GetSection("DefaultUserOptions:Customer"));
+        IConfigurationSection adminOptionsConfiguration = configuration.GetSection(adminOptionsSectionKey);
+        IConfigurationSection customerOptionsConfiguration = configuration.GetSection(customerOptionsSectionKey);
+        services.Configure<AdminUserOptions>(adminOptionsConfiguration);
+        services.Configure<CustomerUserOptions>(customerOptionsConfiguration);
 
         return (adminOptionsConfiguration.Get<AdminUserOptions>(), customerOptionsConfiguration.Get<CustomerUserOptions>());
     }
 
-    public static DataProtectionKeys ConfigureDataProtectionKeys(this IServiceCollection services, IConfiguration configuration)
+    public static DataProtectionKeys ConfigureDataProtectionKeys(this IServiceCollection services, IConfiguration configuration, string dataProtectionKeysSectionKey)
     {
-        IConfigurationSection dataProtectionSection = configuration.GetSection(nameof(DataProtectionKeys));
+        IConfigurationSection dataProtectionSection = configuration.GetSection(dataProtectionKeysSectionKey);
         services.Configure<DataProtectionKeys>(dataProtectionSection);
 
         return dataProtectionSection.Get<DataProtectionKeys>();
     }
 
-    public static JwtSettings ConfigureJwtSettings(this IServiceCollection services, IConfiguration configuration)
+    public static JwtSettings ConfigureJwtSettings(this IServiceCollection services, IConfiguration configuration, string jwtSettingsSectionKey)
     {
-        IConfigurationSection jwtSettingsSection = configuration.GetSection(nameof(JwtSettings));
+        IConfigurationSection jwtSettingsSection = configuration.GetSection(jwtSettingsSectionKey);
         services.Configure<JwtSettings>(jwtSettingsSection);
 
         return jwtSettingsSection.Get<JwtSettings>();
     }
 
-    public static FileStorageOptions ConfigureFileStorageOptions(this IServiceCollection services, IConfiguration configuration)
+    public static FileStorageOptions ConfigureFileStorageOptions(this IServiceCollection services, IConfiguration configuration, string fileStorageSectionKey)
     {
-        IConfigurationSection fileStorageOptionsSection = configuration.GetSection(nameof(FileStorageOptions));
+        IConfigurationSection fileStorageOptionsSection = configuration.GetSection(fileStorageSectionKey);
         services.Configure<FileStorageOptions>(fileStorageOptionsSection);
 
         FileStorageOptions storageOptions = fileStorageOptionsSection.Get<FileStorageOptions>();
@@ -53,9 +54,9 @@ internal static class ServiceCollectionConfigurationExtensions
         return storageOptions;
     }
 
-    public static ProfileImageDefaultOptions ConfigureProfileImageOptions(this IServiceCollection services, IConfiguration configuration)
+    public static ProfileImageDefaultOptions ConfigureProfileImageOptions(this IServiceCollection services, IConfiguration configuration, string profileImageOptionsSectionKey)
     {
-        IConfigurationSection profileImageOptionsSection = configuration.GetSection(nameof(ProfileImageDefaultOptions));
+        IConfigurationSection profileImageOptionsSection = configuration.GetSection(profileImageOptionsSectionKey);
         services.Configure<ProfileImageDefaultOptions>(profileImageOptionsSection);
 
         return profileImageOptionsSection.Get<ProfileImageDefaultOptions>();
