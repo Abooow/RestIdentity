@@ -1,29 +1,14 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using RestIdentity.Server.BackgroundServices;
-using RestIdentity.Server.BackgroundServices.Channels;
-using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
+using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
-using RestIdentity.Server.Services.FunctionalServices;
-using RestIdentity.Server.Services.Handlers;
 using RestIdentity.Server.Services.IpInfo;
-using RestIdentity.Server.Services.ProfileImage;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.User;
-using RestIdentity.Shared.Wrapper;
 
 namespace RestIdentity.Server;
 
@@ -38,117 +23,51 @@ public sealed class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+        // Database Connection.
+        services.AddSqlServerDatabase(Configuration.GetConnectionString("DefaultConnection"));
 
-        services.AddDbContext<DataProtectionKeysContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("DataProtectionKeysConnection")));
+        // Identity User
+        IdentityDefaultOptions identityOptions = services.ConfigureDefaultIdentityOptions(Configuration);
+        services.AddUserIdentity(identityOptions);
+        services.ConfigureDefaultAdminAndCustomerOptions(Configuration);
 
-        var identityDefaultOptionsConfiguration = Configuration.GetSection(nameof(IdentityDefaultOptions));
-        services.Configure<IdentityDefaultOptions>(identityDefaultOptionsConfiguration);
-        var identityDefaultOptions = identityDefaultOptionsConfiguration.Get<IdentityDefaultOptions>();
+        // Data Protection Keys.
+        services.ConfigureDataProtectionKeys(Configuration);
+        services.AddDataProtectionKeys(Configuration.GetConnectionString("DataProtectionKeysConnection"));
 
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-        {
-            options.Password.RequireDigit = identityDefaultOptions.PasswordRequireDigit;
-            options.Password.RequiredLength = identityDefaultOptions.PasswordRequiredLength;
-            options.Password.RequireNonAlphanumeric = identityDefaultOptions.PasswordRequireNonAlphanumeric;
-            options.Password.RequireUppercase = identityDefaultOptions.PasswordRequireUppercase;
-            options.Password.RequireLowercase = identityDefaultOptions.PasswordRequireLowercase;
-            options.Password.RequiredUniqueChars = identityDefaultOptions.PasswordRequiredUniqueChars;
+        // JWT Authentication.
+        JwtSettings jwtSettings = services.ConfigureJwtSettings(Configuration);
+        services.AddJwtAuthentication(jwtSettings);
+        services.AddAdminSchemeAuthentication();
 
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(identityDefaultOptions.LockoutDefaultLockoutTimeSpanInMinutes);
-            options.Lockout.MaxFailedAccessAttempts = identityDefaultOptions.LockoutMaxFailedAccessAttempts;
-            options.Lockout.AllowedForNewUsers = identityDefaultOptions.LockoutAllowedForNewUsers;
+        // File Storage.
+        services.ConfigureFileStorageOptions(Configuration);
 
-            options.User.RequireUniqueEmail = identityDefaultOptions.UserRequreUniqueEmail;
-            options.SignIn.RequireConfirmedEmail = identityDefaultOptions.SignInRequreConfirmedEmail;
-        })
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
-
-        var dataProtectionSection = Configuration.GetSection(nameof(DataProtectionKeys));
-        services.Configure<DataProtectionKeys>(dataProtectionSection);
-        services.AddDataProtection().PersistKeysToDbContext<DataProtectionKeysContext>();
-
-        var jwtSettingsSection = Configuration.GetSection(nameof(JwtSettings));
-        services.Configure<JwtSettings>(jwtSettingsSection);
-
-        var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
-        var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
-        services.AddAuthentication(x =>
-        {
-            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters()
-            {
-                ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
-                ValidateIssuer = jwtSettings.ValidateIssuer,
-                ValidateAudience = jwtSettings.ValidateAudience,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+        // Profile Image Options.
+        services.ConfigureProfileImageOptions(Configuration);
 
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IActivityService, ActivityService>();
 
-        services.AddTransient<IUserService, UserService>();
-        services.AddTransient<ISignedInUserService, SignedInUserService>();
-        services.AddTransient<IProfileImageService, ProfileImageService>();
-
-        var fileStorageOptionsSection = Configuration.GetSection(nameof(FileStorageOptions));
-        services.Configure<FileStorageOptions>(fileStorageOptionsSection);
-
-        var fileStorageOptions = fileStorageOptionsSection.Get<FileStorageOptions>();
-        Directory.CreateDirectory(fileStorageOptions.UserProfileImagesPath);
-        Directory.CreateDirectory(fileStorageOptions.TempFilesPath);
-
-        var profileImageOptionsSection = Configuration.GetSection(nameof(ProfileImageDefaultOptions));
-        services.Configure<ProfileImageDefaultOptions>(profileImageOptionsSection);
-
         services.AddHttpContextAccessor();
         services.AddTransient<ICookieService, CookieService>();
 
-        services.AddAuthentication(RolesConstants.Admin).AddScheme<AdminAuthenticationOptions, AdminAuthenticationHandler>(RolesConstants.Admin, null);
-
-        services.AddControllers().ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = context =>
-            {
-                var problemDetails = new ValidationProblemDetails(context.ModelState)
-                {
-                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                    Title = "One or more model validation errors occurred.",
-                    Status = StatusCodes.Status400BadRequest,
-                    Detail = "See the errors property for details",
-                    Instance = context.HttpContext.Request.Path
-                };
-
-                return new OkObjectResult(Result<ValidationProblemDetails>.Fail(problemDetails, "One or more model validation errors occurred.").AsBadRequest());
-            });
-        services.AddControllersWithViews();
-        services.AddRazorPages();
+        services.AddTransient<IUserService, UserService>();
+        services.AddTransient<ISignedInUserService, SignedInUserService>();
+        services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
         services.AddHttpClient();
         services.AddTransient<IIpInfoService, TestIpInfoService>();
 
         services.AddTransient<IEmailSender, FileEmailSender>();
-        services.AddTransient<IFunctionalService, FunctionalService>();
-        services.Configure<AdminUserOptions>(Configuration.GetSection("DefaultUserOptions:Admin"));
-        services.Configure<CustomerUserOptions>(Configuration.GetSection("DefaultUserOptions:Customer"));
 
-        services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
-
-        // Channels.
-        services.AddSingleton<ProfileImageChannel>();
+        // MVC.
+        services.AddControllers().AddInvalidModelStateResponse();
+        services.AddControllersWithViews();
+        services.AddRazorPages();
 
         // Background Services.
-        services.AddHostedService<ProfileImageDispatcher>();
+        services.AddProfileImageBackgroundService();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
