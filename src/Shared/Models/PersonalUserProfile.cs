@@ -2,7 +2,8 @@
 
 public sealed record PersonalUserProfile
 (
-    string ProfileImage,
+    string AvatarUrl,
+    bool IsDefaultAvatar,
     string Email,
     string UserName,
     string FirstName,

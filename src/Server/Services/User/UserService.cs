@@ -50,7 +50,6 @@ internal sealed class UserService : IUserService
             Email = registerRequest.Email,
             FirstName = registerRequest.FirstName,
             LastName = registerRequest.LastName,
-            ProfilePicHash = "",
             DateCreated = DateTime.UtcNow
         };
 
@@ -84,7 +83,6 @@ internal sealed class UserService : IUserService
             FirstName = registerRequest.FirstName,
             LastName = registerRequest.LastName,
             EmailConfirmed = true,
-            ProfilePicHash = "",
             DateCreated = DateTime.UtcNow
         };
 
@@ -116,16 +114,18 @@ internal sealed class UserService : IUserService
 
     public async Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
-        if (user is null)
+        UserAvatarModel userAvatar = await _profileImageService.FindByIdAsync(userId);
+        if (userAvatar is null)
             return null;
 
+        ApplicationUser user = userAvatar.User;
         IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{user.ProfilePicHash}.png", size = 128 });
+        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{userAvatar.AvatarHash}.png", size = 128 });
 
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
         var userProfile = new PersonalUserProfile(
             profilePicUrl,
+            userAvatar.UsesDefaultAvatar,
             user.Email,
             user.UserName,
             user.FirstName,
@@ -143,12 +143,13 @@ internal sealed class UserService : IUserService
 
     public async Task<UserProfile> GetUserProfileByNameAsync(string userName)
     {
-        ApplicationUser user = await _userManager.FindByNameAsync(userName);
-        if (user is null)
+        UserAvatarModel userAvatar = await _profileImageService.FindByUserNameAsync(userName);
+        if (userAvatar is null)
             return null;
 
+        ApplicationUser user = userAvatar.User;
         IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{user.ProfilePicHash}.png", size = 128 });
+        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{userAvatar.AvatarHash}.png", size = 128 });
 
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
         var userProfile = new UserProfile(

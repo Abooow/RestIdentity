@@ -1,6 +1,7 @@
 ﻿using System.Drawing.Drawing2D;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Services.ProfileImage;
 using RestIdentity.Shared.Wrapper;
@@ -21,15 +22,16 @@ public class AvatarsController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("{url}")]
-    public IActionResult GetProfileImage(string url, [FromQuery] int? size)
+    public async Task<IActionResult> GetProfileImage(string url, [FromQuery] int? size)
     {
         try
         {
             string userNameHash = Path.GetFileNameWithoutExtension(url);
             string contentType = Path.GetExtension(url);
-            (string filePath, string acualContentType) = _profileImageService.GetPhysicalFileLocation(userNameHash, contentType, size);
+            (string filePath, string normalizedContentType) = await _profileImageService.GetPhysicalFileLocation(userNameHash, contentType, size);
 
-            return PhysicalFile(filePath, $"image/{acualContentType}");
+            // TODO: Convert the image type to normalizedContentType.
+            return PhysicalFile(filePath, $"image/{normalizedContentType}");
         }
         catch (Exception e)
         {

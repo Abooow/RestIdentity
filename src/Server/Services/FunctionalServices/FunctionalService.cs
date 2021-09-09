@@ -34,7 +34,6 @@ public sealed class FunctionalService : IFunctionalService
             Email = _adminUserOptions.Email,
             UserName = _adminUserOptions.Username,
             EmailConfirmed = true,
-            ProfilePicHash = "",
             FirstName = _adminUserOptions.FirstName,
             LastName = _adminUserOptions.LastName,
             DateCreated = DateTime.UtcNow
@@ -50,7 +49,6 @@ public sealed class FunctionalService : IFunctionalService
             Email = _customerUserOptions.Email,
             UserName = _customerUserOptions.Username,
             EmailConfirmed = true,
-            ProfilePicHash = "",
             FirstName = _customerUserOptions.FirstName,
             LastName = _customerUserOptions.LastName,
             DateCreated = DateTime.UtcNow

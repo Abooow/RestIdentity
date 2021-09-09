@@ -11,4 +11,5 @@ public sealed class ProfileImageDefaultOptions
     public int DefaultGifSize { get; set; }
     public long MaxUploadImageSizeInBytes { get; set; }
     public long MaxUploadGifSizeInBytes { get; set; }
+    public string DefaultAvatarDirectoryUrl { get; set; }
 }

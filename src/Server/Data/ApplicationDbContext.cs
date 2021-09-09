@@ -10,6 +10,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<TokenModel> Tokens { get; set; }
     public DbSet<ActivityModel> Activities { get; set; }
+    public DbSet<UserAvatarModel> UserAvatars { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

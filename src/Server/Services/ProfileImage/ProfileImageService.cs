@@ -13,7 +13,6 @@ using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
-using Serilog;
 
 namespace RestIdentity.Server.Services.ProfileImage;
 
@@ -40,50 +39,81 @@ internal sealed class ProfileImageService : IProfileImageService
         _dbContext = dbContext;
     }
 
-    public async Task CreateDefaultProfileImageAsync(ApplicationUser user)
+    public Task<UserAvatarModel> FindByIdAsync(string userId)
     {
-        string userIdHash = HashUserId(user.Id);
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-
-        try
-        {
-            user.ProfilePicHash = userIdHash;
-            _dbContext.Update(user);
-
-            CreateDefaultProfileImages(user, userIdHash);
-
-            await _dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
-        }
-        catch (Exception e)
-        {
-            Log.Error("An error occurred while creating default user profile for user {Id}. {Error} {StackTrace} {InnerException} {Source}",
-                user.Id, e.Message, e.StackTrace, e.InnerException, e.Source);
-
-            await transaction.RollbackAsync();
-
-            string userDirectory = $@"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
-            if (Directory.Exists(userDirectory))
-                Directory.Delete(userDirectory, true);
-        }
+        return _dbContext.UserAvatars
+            .Where(x => x.UserId == userId)
+            .Include(x => x.User)
+            .FirstOrDefaultAsync();
     }
 
-    public (string Location, string ActualContentType) GetPhysicalFileLocation(string userIdHash, string contentType, int? size)
+    public Task<UserAvatarModel> FindByUserNameAsync(string userName)
     {
-        string userFolderPath = @$"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
+        userName = userName.ToUpperInvariant();
+        var query = from u in _dbContext.Users
+                    from ua in _dbContext.UserAvatars.Include(x => x.User)
+                    where u.Id == ua.UserId && u.NormalizedUserName == userName
+                    select ua;
 
-        if (!Directory.Exists(userFolderPath))
-            throw new FileNotFoundException();
+        return query.FirstOrDefaultAsync();
+    }
 
-        string acualFileType = GetFileExtensionInDirectory(userFolderPath);
-        contentType = contentType == string.Empty
-            ? acualFileType == "png" ? _profileImageOptions.DefaultImageExtension : _profileImageOptions.DefaultGifExtension
-            : contentType[1..];
+    private Task<UserAvatarModel> FindByAvatarHashAsync(string avatarHash)
+    {
+        return _dbContext.UserAvatars
+            .Where(x => x.AvatarHash == avatarHash)
+            .Include(x => x.User)
+            .FirstOrDefaultAsync();
+    }
 
-        EnsureContentTypeIsAllowed(contentType);
+    public async Task CreateDefaultProfileImageAsync(ApplicationUser user)
+    {
+        UserAvatarModel existingUserAvatar = await FindByIdAsync(user.Id);
+        string userIdHash = HashUserId(user.Id);
+
+        if (existingUserAvatar is null)
+        {
+            // Create new.
+            var userAvatar = new UserAvatarModel(user)
+            {
+                AvatarHash = userIdHash
+            };
+
+            await _dbContext.UserAvatars.AddAsync(userAvatar);
+            await _dbContext.SaveChangesAsync();
+        }
+        else
+        {
+            // Update Existing.
+            existingUserAvatar.LastModifiedDate = DateTime.UtcNow;
+
+            _dbContext.Update(existingUserAvatar);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        CreateDefaultProfileImage(user, userIdHash);
+    }
+
+    public async ValueTask<(string Location, string NormalizedContentType)> GetPhysicalFileLocation(string userIdHash, string contentType, int? size)
+    {
+        UserAvatarModel userAvatar = await FindByAvatarHashAsync(userIdHash);
+        if (userAvatar is null)
+            throw new Exception(); // TODO: Change to a good Exception type with a good message.
+
+        string acualFileType = userAvatar.UsesDefaultAvatar ? _profileImageOptions.DefaultImageExtension : userAvatar.ImageExtension;
+
+        string validContentType = contentType == string.Empty
+            ? acualFileType == "png" ? _profileImageOptions.DefaultImageExtension : _profileImageOptions.DefaultGifExtension // Use a default extension.
+            : contentType[1..]; // Use the requested extension.
+        EnsureContentTypeIsAllowed(validContentType);
+
         int validSize = GetValidSizeForFileType(size, acualFileType);
 
-        return ($@"{userFolderPath}\profileImage{validSize}.{acualFileType}", contentType);
+        string profileImagePath = userAvatar.UsesDefaultAvatar
+            ? @$"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}\{_profileImageOptions.DefaultAvatarDirectoryUrl}\profileImage.{acualFileType}"
+            : @$"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}\profileImage{validSize}.{acualFileType}";
+
+        return (Path.GetFullPath(profileImagePath), validContentType);
     }
 
     public async Task<Result<ProfileImageChannelModel>> UploadProfileImageForSignedInUserAsync(IFormFile file, InterpolationMode interpolationMode)
@@ -120,34 +150,34 @@ internal sealed class ProfileImageService : IProfileImageService
         throw new NotImplementedException();
     }
 
-    public async Task CreateFromChannelAsync(ProfileImageChannelModel profileImage)
+    public async Task CreateFromChannelAsync(ProfileImageChannelModel profileImageChannelModel)
     {
-        string savePath = @$"{_fileStorageOptions.UserProfileImagesPath}\{profileImage.UserId}";
+        string savePath = @$"{_fileStorageOptions.UserProfileImagesPath}\{HashUserId(profileImageChannelModel.UserId)}";
         EnsureDirectoryCreated(savePath);
 
-        var image = Image.FromFile(profileImage.TempFilePath);
+        var image = Image.FromFile(profileImageChannelModel.TempFilePath);
 
-        switch (profileImage.OriginalFileType)
+        switch (profileImageChannelModel.OriginalFileType)
         {
             case "image/png":
             case "image/jpeg":
-                CreateImages(image, profileImage, savePath);
+                await CreateImages(profileImageChannelModel, image, savePath);
                 image.Dispose();
                 break;
 
             case "image/gif":
                 Size size = image.Size;
                 image.Dispose();
-                await CreateGifsAsync(profileImage, size, savePath);
+                await CreateGifsAsync(profileImageChannelModel, size, savePath);
                 break;
 
             default:
                 image.Dispose();
-                File.Delete(profileImage.TempFilePath);
-                throw new Exception($"File type is not supported. Supported types are (image/png, image/jpeg, image/gif), but is was {profileImage.OriginalFileType}");
+                File.Delete(profileImageChannelModel.TempFilePath);
+                throw new Exception($"File type is not supported. Supported types are (image/png, image/jpeg, image/gif), but is was {profileImageChannelModel.OriginalFileType}");
         }
 
-        File.Delete(profileImage.TempFilePath);
+        File.Delete(profileImageChannelModel.TempFilePath);
     }
 
     private static Image CreateTextProfileImage(string userInitials, int size, Color backgroundColor)
@@ -186,29 +216,6 @@ internal sealed class ProfileImageService : IProfileImageService
             Directory.CreateDirectory(directory);
     }
 
-    private static void CreateImages(Image image, ProfileImageChannelModel profileImage, string savePath)
-    {
-        foreach (int size in profileImage.DesiredImageSizes)
-        {
-            using Bitmap resizedImage = ImageUtilities.ResizeImage(image, size, size, profileImage.InterpolationMode);
-            resizedImage.Save($@"{savePath}\profileImage{size}.png", ImageFormat.Png);
-        }
-    }
-
-    private async static Task CreateGifsAsync(ProfileImageChannelModel profileImage, Size originalSize, string savePath)
-    {
-        using FileStream gifStream = File.OpenRead(profileImage.TempFilePath);
-
-        foreach (int size in profileImage.DesiredImageSizes)
-        {
-            gifStream.Seek(0, SeekOrigin.Begin);
-            using MagickImageCollection resizedGif = ImageUtilities.ResizeGif(gifStream, originalSize.Width, originalSize.Height, size, size, profileImage.InterpolationMode);
-            await resizedGif.WriteAsync($@"{savePath}\profileImage{size}.gif", MagickFormat.Gif);
-        }
-
-        File.Create($@"{savePath}\gif_type.dbl").Dispose();
-    }
-
     private static string HashUserId(string userId)
     {
         using var sha1 = SHA1.Create();
@@ -218,21 +225,59 @@ internal sealed class ProfileImageService : IProfileImageService
         return userIdHash;
     }
 
-    private void CreateDefaultProfileImages(ApplicationUser user, string userIdHash)
+    private static Color GetRandomColor()
     {
-        int userNameHashCode = Math.Abs(user.UserName.GetHashCode());
-        Color backgroundColor = ImageUtilities.ColorFromHSV(userNameHashCode % 360, 75 / 100f, 75 / 100f);
-        string userInitials = $"{user.FirstName[0]}{user.LastName[0]}";
+        var random = new Random();
+        return ImageUtilities.ColorFromHSV(random.Next(360), 75 / 100f, 75 / 100f);
+    }
 
-        string userDirectory = $@"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}";
-        Directory.CreateDirectory(userDirectory);
-
-        foreach (int size in _profileImageOptions.ImageSizes)
+    private async Task CreateImages(ProfileImageChannelModel profileImageChannelModel, Image image, string savePath)
+    {
+        foreach (int size in profileImageChannelModel.DesiredImageSizes)
         {
-            string filePath = $@"{userDirectory}\profileImage{size}.{_profileImageOptions.DefaultImageExtension}";
-            using Image profileImage = CreateTextProfileImage(userInitials, size, backgroundColor);
-            profileImage.Save(filePath);
+            using Bitmap resizedImage = ImageUtilities.ResizeImage(image, size, size, profileImageChannelModel.InterpolationMode);
+            resizedImage.Save($@"{savePath}\profileImage{size}.png", ImageFormat.Png);
         }
+
+        await UpdateUserAvatar(profileImageChannelModel.UserId, "png");
+    }
+
+    private async Task CreateGifsAsync(ProfileImageChannelModel profileImageChannelModel, Size originalSize, string savePath)
+    {
+        using FileStream gifStream = File.OpenRead(profileImageChannelModel.TempFilePath);
+
+        foreach (int size in profileImageChannelModel.DesiredImageSizes)
+        {
+            gifStream.Seek(0, SeekOrigin.Begin);
+            using MagickImageCollection resizedGif = ImageUtilities.ResizeGif(gifStream, originalSize.Width, originalSize.Height, size, size, profileImageChannelModel.InterpolationMode);
+            await resizedGif.WriteAsync($@"{savePath}\profileImage{size}.gif", MagickFormat.Gif);
+        }
+
+        await UpdateUserAvatar(profileImageChannelModel.UserId, "gif");
+    }
+
+    private async Task UpdateUserAvatar(string userId, string imageExtension)
+    {
+        UserAvatarModel userAvatar = await FindByIdAsync(userId);
+        userAvatar.UsesDefaultAvatar = false;
+        userAvatar.ImageExtension = imageExtension;
+        userAvatar.LastModifiedDate = DateTime.UtcNow;
+
+        _dbContext.Update(userAvatar);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    private void CreateDefaultProfileImage(ApplicationUser user, string userIdHash)
+    {
+        Color backgroundColor = GetRandomColor();
+        string userInitials = $"{user.FirstName[0]}{user.LastName[0]}".ToUpperInvariant();
+
+        string defaultAvatarDirectory = $@"{_fileStorageOptions.UserProfileImagesPath}\{userIdHash}\{_profileImageOptions.DefaultAvatarDirectoryUrl}";
+        Directory.CreateDirectory(defaultAvatarDirectory);
+
+        string filePath = $@"{defaultAvatarDirectory}\profileImage.{_profileImageOptions.DefaultImageExtension}";
+        using Image profileImage = CreateTextProfileImage(userInitials, _profileImageOptions.DefaultImageSize, backgroundColor);
+        profileImage.Save(filePath);
     }
 
     private bool IsContentTypeAllowed(string contentType)
@@ -280,10 +325,5 @@ internal sealed class ProfileImageService : IProfileImageService
     {
         if (!IsContentTypeAllowed(contentType))
             throw new Exception($"Invalid extension requested. Allowed extensions are ({string.Join(", ", _profileImageOptions.AllowedFileExtensions)}), but it was ({contentType})");
-    }
-
-    private string GetFileExtensionInDirectory(string directory)
-    {
-        return File.Exists($@"{directory}\gif_type.dbl") ? "gif" : "png";
     }
 }
