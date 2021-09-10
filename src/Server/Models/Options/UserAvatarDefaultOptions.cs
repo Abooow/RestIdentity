@@ -1,6 +1,6 @@
 ﻿namespace RestIdentity.Server.Models.Options;
 
-public sealed class ProfileImageDefaultOptions
+public sealed class UserAvatarDefaultOptions
 {
     public IEnumerable<string> AllowedFileExtensions { get; set; }
     public IEnumerable<int> ImageSizes { get; set; }

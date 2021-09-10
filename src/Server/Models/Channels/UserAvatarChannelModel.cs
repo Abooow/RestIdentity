@@ -2,7 +2,7 @@
 
 namespace RestIdentity.Server.Models.Channels;
 
-public sealed class ProfileImageChannelModel : ChannelModel
+public sealed class UserAvatarChannelModel : ChannelModel
 {
     public string UserId { get; init; }
     public string TempFilePath { get; init; }
@@ -12,9 +12,9 @@ public sealed class ProfileImageChannelModel : ChannelModel
     public IEnumerable<int> DesiredImageSizes { get; init; }
     public InterpolationMode InterpolationMode { get; init; }
 
-    private ProfileImageChannelModel(string UserId, string tempFilePath, string originalFileName, string originalFileType, long originalFileLength, IEnumerable<int> desiredImageSizes, InterpolationMode interpolationMode)
+    private UserAvatarChannelModel(string userId, string tempFilePath, string originalFileName, string originalFileType, long originalFileLength, IEnumerable<int> desiredImageSizes, InterpolationMode interpolationMode)
     {
-        this.UserId = UserId;
+        UserId = userId;
         TempFilePath = tempFilePath;
         OriginalFileName = originalFileName;
         OriginalFileType = originalFileType;
@@ -23,9 +23,9 @@ public sealed class ProfileImageChannelModel : ChannelModel
         InterpolationMode = interpolationMode;
     }
 
-    public static ProfileImageChannelModel CreateNew(string userId, string tempFilePath, string originalFileName, string originalFileType, long originalFileLength, IEnumerable<int> desiredImageSizes, InterpolationMode interpolationMode)
+    public static UserAvatarChannelModel CreateNew(string userId, string tempFilePath, string originalFileName, string originalFileType, long originalFileLength, IEnumerable<int> desiredImageSizes, InterpolationMode interpolationMode)
     {
-        return new ProfileImageChannelModel(userId, tempFilePath, originalFileName, originalFileType, originalFileLength, desiredImageSizes, interpolationMode)
+        return new UserAvatarChannelModel(userId, tempFilePath, originalFileName, originalFileType, originalFileLength, desiredImageSizes, interpolationMode)
         {
             Id = Guid.NewGuid(),
             DateRequested = DateTime.UtcNow,

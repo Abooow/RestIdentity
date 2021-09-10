@@ -48,17 +48,17 @@ internal static class ServiceCollectionConfigurationExtensions
         FileStorageOptions storageOptions = fileStorageOptionsSection.Get<FileStorageOptions>();
 
         // Ensure the directories exists.
-        Directory.CreateDirectory(storageOptions.UserProfileImagesPath);
+        Directory.CreateDirectory(storageOptions.UserAvatarsPath);
         Directory.CreateDirectory(storageOptions.TempFilesPath);
 
         return storageOptions;
     }
 
-    public static ProfileImageDefaultOptions ConfigureProfileImageOptions(this IServiceCollection services, IConfiguration configuration, string profileImageOptionsSectionKey)
+    public static UserAvatarDefaultOptions ConfigureUserAvatarOptions(this IServiceCollection services, IConfiguration configuration, string userAvatarOptionsSectionKey)
     {
-        IConfigurationSection profileImageOptionsSection = configuration.GetSection(profileImageOptionsSectionKey);
-        services.Configure<ProfileImageDefaultOptions>(profileImageOptionsSection);
+        IConfigurationSection userAvatarOptionsSection = configuration.GetSection(userAvatarOptionsSectionKey);
+        services.Configure<UserAvatarDefaultOptions>(userAvatarOptionsSection);
 
-        return profileImageOptionsSection.Get<ProfileImageDefaultOptions>();
+        return userAvatarOptionsSection.Get<UserAvatarDefaultOptions>();
     }
 }

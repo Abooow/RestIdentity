@@ -8,8 +8,8 @@ using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Activity;
-using RestIdentity.Server.Services.ProfileImage;
 using RestIdentity.Server.Services.SignedInUser;
+using RestIdentity.Server.Services.UserAvatars;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Wrapper;
@@ -24,7 +24,7 @@ internal sealed class UserService : IUserService
     private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IUrlHelperFactory _urlHelperFactory;
     private readonly IActivityService _activityService;
-    private readonly IProfileImageService _profileImageService;
+    private readonly IUserAvatarService _userAvatarService;
 
     public UserService(
         UserManager<ApplicationUser> userManager,
@@ -32,14 +32,14 @@ internal sealed class UserService : IUserService
         IActionContextAccessor actionContextAccessor,
         IUrlHelperFactory urlHelperFactory,
         IActivityService activityService,
-        IProfileImageService profileImageService)
+        IUserAvatarService userAvatarService)
     {
         _userManager = userManager;
         _signedInUserInfoService = signedInUserInfoService;
         _actionContextAccessor = actionContextAccessor;
         _urlHelperFactory = urlHelperFactory;
         _activityService = activityService;
-        _profileImageService = profileImageService;
+        _userAvatarService = userAvatarService;
     }
 
     public async Task<Result<ApplicationUser>> RegisterUserAsync(RegisterRequest registerRequest)
@@ -57,7 +57,7 @@ internal sealed class UserService : IUserService
         if (!result.Succeeded)
             return Result<ApplicationUser>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
-        await _profileImageService.CreateDefaultProfileImageAsync(user);
+        await _userAvatarService.CreateDefaultAvatarAsync(user);
 
         Log.Information("Customer User {Email} registered", user.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Customer);
@@ -90,7 +90,7 @@ internal sealed class UserService : IUserService
         if (!result.Succeeded)
             return Result<ApplicationUser>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
-        await _profileImageService.CreateDefaultProfileImageAsync(user);
+        await _userAvatarService.CreateDefaultAvatarAsync(user);
 
         Log.Information("Admin User {Email} registered by {SignInUser}", user.Email, signedInUser.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Admin);
@@ -114,17 +114,16 @@ internal sealed class UserService : IUserService
 
     public async Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId)
     {
-        UserAvatarModel userAvatar = await _profileImageService.FindByIdAsync(userId);
+        UserAvatarModel userAvatar = await _userAvatarService.FindByIdAsync(userId);
         if (userAvatar is null)
             return null;
 
         ApplicationUser user = userAvatar.User;
-        IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{userAvatar.AvatarHash}.png", size = 128 });
-
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
+        string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
+
         var userProfile = new PersonalUserProfile(
-            profilePicUrl,
+            userAvatarUrl,
             userAvatar.UsesDefaultAvatar,
             user.Email,
             user.UserName,
@@ -143,17 +142,16 @@ internal sealed class UserService : IUserService
 
     public async Task<UserProfile> GetUserProfileByNameAsync(string userName)
     {
-        UserAvatarModel userAvatar = await _profileImageService.FindByUserNameAsync(userName);
+        UserAvatarModel userAvatar = await _userAvatarService.FindByUserNameAsync(userName);
         if (userAvatar is null)
             return null;
 
         ApplicationUser user = userAvatar.User;
-        IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-        string profilePicUrl = urlHelper.AbsoluteAction("avatars", "GetProfileImage", new { url = $"{userAvatar.AvatarHash}.png", size = 128 });
-
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
+        string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
+
         var userProfile = new UserProfile(
-            profilePicUrl,
+            userAvatarUrl,
             user.UserName,
             user.FirstName,
             user.LastName,
@@ -247,5 +245,11 @@ internal sealed class UserService : IUserService
             return (false, null);
 
         return (true, user);
+    }
+
+    private string GetUserAvatarUrl(string userHash)
+    {
+        IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+        return urlHelper.AbsoluteAction("avatars", "GetUserAvatar", new { url = $"{userHash}.png", size = 128 });
     }
 }

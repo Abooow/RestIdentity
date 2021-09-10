@@ -1,16 +1,16 @@
 ﻿using RestIdentity.Server.BackgroundServices;
 using RestIdentity.Server.BackgroundServices.Channels;
-using RestIdentity.Server.Services.ProfileImage;
+using RestIdentity.Server.Services.UserAvatars;
 
 namespace RestIdentity.Server.Extensions;
 
 internal static class ServiceCollectionBackgroundServicesExtensions
 {
-    public static IServiceCollection AddProfileImageBackgroundService(this IServiceCollection services)
+    public static IServiceCollection AddUserAvatarBackgroundService(this IServiceCollection services)
     {
-        services.AddTransient<IProfileImageService, ProfileImageService>();
-        services.AddSingleton<ProfileImageChannel>();
-        services.AddHostedService<ProfileImageDispatcher>();
+        services.AddTransient<IUserAvatarService, UserAvatarService>();
+        services.AddSingleton<UserAvatarChannel>();
+        services.AddHostedService<UserAvatarDispatcher>();
 
         return services;
     }

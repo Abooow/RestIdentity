@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.ProfileImage;
+using RestIdentity.Server.Services.UserAvatars;
 using Serilog;
 
 namespace RestIdentity.Server.Services.FunctionalServices;
@@ -11,18 +11,18 @@ namespace RestIdentity.Server.Services.FunctionalServices;
 public sealed class FunctionalService : IFunctionalService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IProfileImageService _profileImageService;
+    private readonly IUserAvatarService _userAvatarService;
     private readonly AdminUserOptions _adminUserOptions;
     private readonly CustomerUserOptions _customerUserOptions;
 
     public FunctionalService(
         UserManager<ApplicationUser> userManager,
-        IProfileImageService profileImageService,
+        IUserAvatarService userAvatarService,
         IOptions<AdminUserOptions> adminUserOptions,
         IOptions<CustomerUserOptions> customerUserOptions)
     {
         _userManager = userManager;
-        _profileImageService = profileImageService;
+        _userAvatarService = userAvatarService;
         _adminUserOptions = adminUserOptions.Value;
         _customerUserOptions = customerUserOptions.Value;
     }
@@ -71,7 +71,7 @@ public sealed class FunctionalService : IFunctionalService
                 return;
             }
 
-            await _profileImageService.CreateDefaultProfileImageAsync(user);
+            await _userAvatarService.CreateDefaultAvatarAsync(user);
             await _userManager.AddToRoleAsync(user, role);
 
             Log.Information($"{role} user was successfully created. ({{UserName}})", user.UserName);

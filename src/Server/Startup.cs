@@ -44,8 +44,8 @@ public sealed class Startup
         // File Storage.
         services.ConfigureFileStorageOptions(Configuration, nameof(FileStorageOptions));
 
-        // Profile Image Options.
-        services.ConfigureProfileImageOptions(Configuration, nameof(ProfileImageDefaultOptions));
+        // User Avatar Options.
+        services.ConfigureUserAvatarOptions(Configuration, nameof(UserAvatarDefaultOptions));
 
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IActivityService, ActivityService>();
@@ -68,7 +68,7 @@ public sealed class Startup
         services.AddRazorPages();
 
         // Background Services.
-        services.AddProfileImageBackgroundService();
+        services.AddUserAvatarBackgroundService();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
