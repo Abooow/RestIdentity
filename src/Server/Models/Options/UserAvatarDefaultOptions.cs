@@ -12,4 +12,5 @@ public sealed class UserAvatarDefaultOptions
     public long MaxUploadImageSizeInBytes { get; set; }
     public long MaxUploadGifSizeInBytes { get; set; }
     public string DefaultAvatarDirectoryUrl { get; set; }
+    public string AvatarFileName { get; set; }
 }

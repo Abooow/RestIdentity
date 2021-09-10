@@ -97,7 +97,7 @@ internal sealed class UserAvatarService : IUserAvatarService
     {
         UserAvatarModel userAvatar = await FindByAvatarHashAsync(userHash);
         if (userAvatar is null)
-            throw new Exception(); // TODO: Change to a good Exception type with a good message.
+            throw new Exception($"Could not find a User Avatar with userHash: {userHash}"); // TODO: Change to a good Exception type with a good message.
 
         string acualFileType = userAvatar.UsesDefaultAvatar ? _userAvatarOptions.DefaultImageExtension : userAvatar.ImageExtension;
 
@@ -109,8 +109,8 @@ internal sealed class UserAvatarService : IUserAvatarService
         int validSize = GetValidSizeForFileType(size, acualFileType);
 
         string userAvatarPath = userAvatar.UsesDefaultAvatar
-            ? @$"{_fileStorageOptions.UserAvatarsPath}\{userHash}\{_userAvatarOptions.DefaultAvatarDirectoryUrl}\avatar.{acualFileType}"
-            : @$"{_fileStorageOptions.UserAvatarsPath}\{userHash}\avatar{validSize}.{acualFileType}";
+            ? @$"{_fileStorageOptions.UserAvatarsPath}\{userHash}\{_userAvatarOptions.DefaultAvatarDirectoryUrl}\{_userAvatarOptions.AvatarFileName}.{acualFileType}"
+            : @$"{_fileStorageOptions.UserAvatarsPath}\{userHash}\{_userAvatarOptions.AvatarFileName}{validSize}.{acualFileType}";
 
         return (Path.GetFullPath(userAvatarPath), validContentType);
     }
@@ -235,7 +235,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         foreach (int size in userAvatarChannelModel.DesiredImageSizes)
         {
             using Bitmap resizedImage = ImageUtilities.ResizeImage(image, size, size, userAvatarChannelModel.InterpolationMode);
-            resizedImage.Save($@"{savePath}\avatar{size}.png", ImageFormat.Png);
+            resizedImage.Save($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.png", ImageFormat.Png);
         }
 
         await UpdateUserAvatar(userAvatarChannelModel.UserId, "png");
@@ -249,7 +249,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         {
             gifStream.Seek(0, SeekOrigin.Begin);
             using MagickImageCollection resizedGif = ImageUtilities.ResizeGif(gifStream, originalSize.Width, originalSize.Height, size, size, userAvatarChannelModel.InterpolationMode);
-            await resizedGif.WriteAsync($@"{savePath}\avatar{size}.gif", MagickFormat.Gif);
+            await resizedGif.WriteAsync($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.gif", MagickFormat.Gif);
         }
 
         await UpdateUserAvatar(userAvatarChannelModel.UserId, "gif");
@@ -274,7 +274,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         string defaultAvatarDirectory = $@"{_fileStorageOptions.UserAvatarsPath}\{userIdHash}\{_userAvatarOptions.DefaultAvatarDirectoryUrl}";
         Directory.CreateDirectory(defaultAvatarDirectory);
 
-        string filePath = $@"{defaultAvatarDirectory}\avatar.{_userAvatarOptions.DefaultImageExtension}";
+        string filePath = $@"{defaultAvatarDirectory}\{_userAvatarOptions.AvatarFileName}.{_userAvatarOptions.DefaultImageExtension}";
         using Image userAvatar = CreateAvatarImageWithText(userInitials, _userAvatarOptions.DefaultImageSize, backgroundColor);
         userAvatar.Save(filePath);
     }
