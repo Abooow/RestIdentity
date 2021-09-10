@@ -49,14 +49,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "b5b44515-249f-4bcb-97cd-100319fb6674",
+                            ConcurrencyStamp = "de261daf-0774-4ae5-ac1d-ffbee9af775f",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "3798b8cf-22af-4a5e-b7df-819cfbbe553d",
+                            ConcurrencyStamp = "baa1ab00-605f-4c9c-8455-141b0b977a2a",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
@@ -265,11 +265,6 @@ namespace RestIdentity.Server.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ProfilePictureUrl")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -336,6 +331,32 @@ namespace RestIdentity.Server.Migrations
                     b.ToTable("Tokens");
                 });
 
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.UserAvatarModel", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AvatarHash")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("ImageExtension")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("UsesDefaultAvatar")
+                        .HasColumnType("bit");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserAvatars");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -396,6 +417,22 @@ namespace RestIdentity.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.UserAvatarModel", b =>
+                {
+                    b.HasOne("RestIdentity.Server.Models.DAO.ApplicationUser", "User")
+                        .WithOne("UserAvatar")
+                        .HasForeignKey("RestIdentity.Server.Models.DAO.UserAvatarModel", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.ApplicationUser", b =>
+                {
+                    b.Navigation("UserAvatar");
                 });
 #pragma warning restore 612, 618
         }
