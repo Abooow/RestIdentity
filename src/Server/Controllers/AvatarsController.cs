@@ -39,7 +39,7 @@ public class AvatarsController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
     [HttpPost]
     public async Task<IActionResult> UploadUserAvatar(IFormFile file, [FromQuery] string interpolation)
     {

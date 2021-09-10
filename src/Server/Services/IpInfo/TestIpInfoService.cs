@@ -27,12 +27,12 @@ internal sealed class TestIpInfoService : IIpInfoService
 
     public string GetRemoteIpAddress()
     {
-        return _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+        return _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "::1";
     }
 
     public string GetRemoteOperatingSystem()
     {
-        return _httpContextAccessor.HttpContext.Request.Headers["User-Agent"];
+        return _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"] ?? "UNKNOWN";
     }
 
     public Task<IIpInfo> GetIpInfoAsync(CancellationToken cancellationToken)

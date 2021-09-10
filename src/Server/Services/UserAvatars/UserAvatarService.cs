@@ -7,10 +7,12 @@ using ImageMagick;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RestIdentity.Server.BackgroundServices.Channels;
+using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
+using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
 
@@ -20,6 +22,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ISignedInUserService _signedInUserService;
+    private readonly IActivityService _activityService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly UserAvatarDefaultOptions _userAvatarOptions;
     private readonly UserAvatarChannel _userAvatarChannel;
@@ -27,12 +30,14 @@ internal sealed class UserAvatarService : IUserAvatarService
     public UserAvatarService(
         ApplicationDbContext dbContext,
         ISignedInUserService signedInUserService,
+        IActivityService activityService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<UserAvatarDefaultOptions> userAvatarOptions,
         UserAvatarChannel userAvatarChannel)
     {
         _dbContext = dbContext;
         _signedInUserService = signedInUserService;
+        _activityService = activityService;
         _fileStorageOptions = fileStorageOptions.Value;
         _userAvatarOptions = userAvatarOptions.Value;
         _userAvatarChannel = userAvatarChannel;
@@ -88,6 +93,8 @@ internal sealed class UserAvatarService : IUserAvatarService
 
             _dbContext.Update(existingUserAvatar);
             await _dbContext.SaveChangesAsync();
+
+            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.UserUpdatedDefaultAvatar);
         }
 
         CreateDefaultUserAvatar(user, userIdHash);
@@ -141,12 +148,13 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public Task RemoveAvatarForSignedInUserAsync()
     {
-        throw new NotImplementedException();
+        return _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.UserRemovedAvatar);
     }
 
-    public Task RemoveAvatarAsync(string userId)
+    public async Task RemoveAvatarAsync(string userId)
     {
-        throw new NotImplementedException();
+        string signedInUserId = _signedInUserService.GetUserId();
+        await _activityService.AddUserActivityAsync(userId, ActivityConstants.UserRemovedAvatar, $"REMOVED_BY: {signedInUserId}");
     }
 
     public async Task CreateFromChannelAsync(UserAvatarChannelModel userAvatarChannelModel)
@@ -177,6 +185,8 @@ internal sealed class UserAvatarService : IUserAvatarService
         }
 
         File.Delete(userAvatarChannelModel.TempFilePath);
+
+        await _activityService.AddUserActivityAsync(userAvatarChannelModel.UserId, ActivityConstants.UserUpdatedAvatar);
     }
 
     private static Image CreateAvatarImageWithText(string userInitials, int size, Color backgroundColor)
