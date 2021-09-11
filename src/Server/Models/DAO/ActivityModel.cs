@@ -22,9 +22,6 @@ public class ActivityModel
     public string IpAddress { get; set; }
 
     [MaxLength(100)]
-    public string Location { get; set; }
-
-    [MaxLength(100)]
     public string OperationgSystem { get; set; }
 
     public DateTime Date { get; set; }

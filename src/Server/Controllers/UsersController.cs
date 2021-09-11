@@ -99,7 +99,7 @@ public sealed class UsersController : ControllerBase
     {
         foreach (ActivityModel activity in activities)
         {
-            yield return new UserActivity(activity.Type, activity.IpAddress, activity.Location, activity.Date);
+            yield return new UserActivity(activity.Type, activity.IpAddress, activity.Date);
         }
     }
 }

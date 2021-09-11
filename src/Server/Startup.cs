@@ -7,7 +7,7 @@ using RestIdentity.Server.Services.Activity;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
-using RestIdentity.Server.Services.IpInfo;
+using RestIdentity.Server.Services.RemoteConnectionInfo;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.User;
 
@@ -57,8 +57,7 @@ public sealed class Startup
         services.AddTransient<ISignedInUserService, SignedInUserService>();
         services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
-        services.AddHttpClient();
-        services.AddTransient<IIpInfoService, TestIpInfoService>();
+        services.AddTransient<IRemoteConnectionInfoService, RemoteConnectionInfoService>();
 
         services.AddTransient<IEmailSender, FileEmailSender>();
 

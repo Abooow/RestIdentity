@@ -1,16 +1,12 @@
-﻿using RestIdentity.Server.Services.IpInfo;
-
-namespace RestIdentity.Server.Services.Cookies;
+﻿namespace RestIdentity.Server.Services.Cookies;
 
 public class CookieService : ICookieService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IIpInfoService _ipInfoService;
 
-    public CookieService(IHttpContextAccessor httpContextAccessor, IIpInfoService ipInfoService)
+    public CookieService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
-        _ipInfoService = ipInfoService;
     }
 
     public string GetCookie(string key)

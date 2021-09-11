@@ -3,8 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Models.Ip;
-using RestIdentity.Server.Services.IpInfo;
+using RestIdentity.Server.Services.RemoteConnectionInfo;
 using RestIdentity.Server.Services.SignedInUser;
 using Serilog;
 
@@ -15,18 +14,18 @@ public sealed class ActivityService : IActivityService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISignedInUserService _signedInUserService;
     private readonly ApplicationDbContext _context;
-    private readonly IIpInfoService _ipInfoService;
+    private readonly IRemoteConnectionInfoService _remoteConnectionService;
 
     public ActivityService(
         UserManager<ApplicationUser> userManager,
         ISignedInUserService signedInUserService,
         ApplicationDbContext context,
-        IIpInfoService ipInfoService)
+        IRemoteConnectionInfoService remoteConnectionService)
     {
         _userManager = userManager;
         _signedInUserService = signedInUserService;
         _context = context;
-        _ipInfoService = ipInfoService;
+        _remoteConnectionService = remoteConnectionService;
     }
 
     public Task AddUserActivityForSignInUserAsync(string type)
@@ -53,15 +52,13 @@ public sealed class ActivityService : IActivityService
 
     public async Task AddUserActivityAsync(string userId, string type, string data)
     {
-        IIpInfo ipInfo = await _ipInfoService.GetIpInfoAsync();
         var activity = new ActivityModel()
         {
             Type = type,
             Data = data,
             UserId = userId,
-            IpAddress = _ipInfoService.GetRemoteIpAddress(),
-            Location = ipInfo.Country is null ? "unknown" : $"{ipInfo.Country}, {ipInfo.City}",
-            OperationgSystem = _ipInfoService.GetRemoteOperatingSystem(),
+            IpAddress = _remoteConnectionService.GetRemoteIpAddress(),
+            OperationgSystem = _remoteConnectionService.GetRemoteOperatingSystem(),
             Date = DateTime.UtcNow
         };
 

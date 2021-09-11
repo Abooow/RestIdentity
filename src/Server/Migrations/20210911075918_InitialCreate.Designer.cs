@@ -10,7 +10,7 @@ using RestIdentity.Server.Data;
 namespace RestIdentity.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210910105127_InitialCreate")]
+    [Migration("20210911075918_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,14 +51,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "de261daf-0774-4ae5-ac1d-ffbee9af775f",
+                            ConcurrencyStamp = "8539b63f-1496-4d2f-b42a-73def32b3a1d",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "baa1ab00-605f-4c9c-8455-141b0b977a2a",
+                            ConcurrencyStamp = "080dffe8-25f3-44ce-a65f-513072035bc0",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
@@ -183,10 +183,6 @@ namespace RestIdentity.Server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("IpAddress")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Location")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
