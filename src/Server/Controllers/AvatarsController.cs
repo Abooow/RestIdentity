@@ -39,8 +39,8 @@ public class AvatarsController : ControllerBase
         }
     }
 
-    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
-    [HttpPost]
+    [Authorize]
+    [HttpPost("upload")]
     public async Task<IActionResult> UploadUserAvatar(IFormFile file, [FromQuery] string interpolation)
     {
         if (file is null)
@@ -59,5 +59,27 @@ public class AvatarsController : ControllerBase
 
         Log.Information("User Avatar Uploaded, Id: {id}", userAvatarResult.Data.Id);
         return Ok(userAvatarResult with { Data = null });
+    }
+
+    [Authorize]
+    [HttpDelete("remove")]
+    public async Task<IActionResult> RemoveMyAvatar()
+    {
+        Result removeAvatarResult = await _userAvatarService.RemoveAvatarForSignedInUserAsync();
+
+        return removeAvatarResult.Succeeded
+            ? Ok(removeAvatarResult)
+            : BadRequest(removeAvatarResult);
+    }
+
+    [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
+    [HttpDelete("remove/{userId}")]
+    public async Task<IActionResult> RemoveUserAvatar(string userId)
+    {
+        Result removeAvatarResult = await _userAvatarService.RemoveAvatarAsync(userId);
+
+        return removeAvatarResult.Succeeded
+            ? Ok(removeAvatarResult)
+            : BadRequest(removeAvatarResult);
     }
 }

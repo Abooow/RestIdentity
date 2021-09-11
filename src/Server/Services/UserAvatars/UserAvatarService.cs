@@ -146,15 +146,27 @@ internal sealed class UserAvatarService : IUserAvatarService
         return Result<UserAvatarChannelModel>.Success(data, "Image uploaded successfully, your profile image will update shortly.");
     }
 
-    public Task RemoveAvatarForSignedInUserAsync()
+    public async Task<Result> RemoveAvatarForSignedInUserAsync()
     {
-        return _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.UserRemovedAvatar);
+        UserAvatarModel userAvatar = await RemoveUserAvatarAsync(_signedInUserService.GetUserId());
+        if (userAvatar is null)
+            return Result.Fail($"Failed to remove your avatar.");
+
+        await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.UserRemovedAvatar);
+
+        return Result.Success("Your avatar has been successfully removed.");
     }
 
-    public async Task RemoveAvatarAsync(string userId)
+    public async Task<Result> RemoveAvatarAsync(string userId)
     {
+        UserAvatarModel userAvatar = await RemoveUserAvatarAsync(userId);
+        if (userAvatar is null)
+            return Result.Fail($"Could not find user with Id: {userId}");
+
         string signedInUserId = _signedInUserService.GetUserId();
         await _activityService.AddUserActivityAsync(userId, ActivityConstants.UserRemovedAvatar, $"REMOVED_BY: {signedInUserId}");
+
+        return Result.Success($"Successfully removed User Avatar for user {userId}");
     }
 
     public async Task CreateFromChannelAsync(UserAvatarChannelModel userAvatarChannelModel)
@@ -248,7 +260,7 @@ internal sealed class UserAvatarService : IUserAvatarService
             resizedImage.Save($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.png", ImageFormat.Png);
         }
 
-        await UpdateUserAvatar(userAvatarChannelModel.UserId, "png");
+        await UpdateUserAvatarAsync(userAvatarChannelModel.UserId, "png");
     }
 
     private async Task CreateGifsAsync(UserAvatarChannelModel userAvatarChannelModel, Size originalSize, string savePath)
@@ -262,18 +274,40 @@ internal sealed class UserAvatarService : IUserAvatarService
             await resizedGif.WriteAsync($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.gif", MagickFormat.Gif);
         }
 
-        await UpdateUserAvatar(userAvatarChannelModel.UserId, "gif");
+        await UpdateUserAvatarAsync(userAvatarChannelModel.UserId, "gif");
     }
 
-    private async Task UpdateUserAvatar(string userId, string imageExtension)
+    private async Task<UserAvatarModel> UpdateUserAvatarAsync(string userId, string imageExtension)
     {
         UserAvatarModel userAvatar = await FindByIdAsync(userId);
-        userAvatar.UsesDefaultAvatar = false;
+        if (userAvatar is null)
+            return null;
+
+        userAvatar.UsesDefaultAvatar = imageExtension is null;
         userAvatar.ImageExtension = imageExtension;
         userAvatar.LastModifiedDate = DateTime.UtcNow;
 
         _dbContext.Update(userAvatar);
         await _dbContext.SaveChangesAsync();
+
+        return userAvatar;
+    }
+
+    private async Task<UserAvatarModel> RemoveUserAvatarAsync(string userId)
+    {
+        UserAvatarModel userAvatar = await UpdateUserAvatarAsync(userId, null);
+        if (userAvatar is null)
+            return null;
+
+        string userAvatarDirectory = $@"{_fileStorageOptions.UserAvatarsPath}\{userAvatar.AvatarHash}";
+        var directoryInfo = new DirectoryInfo(userAvatarDirectory);
+
+        foreach (FileInfo file in directoryInfo.GetFiles())
+        {
+            file.Delete();
+        }
+
+        return userAvatar;
     }
 
     private void CreateDefaultUserAvatar(ApplicationUser user, string userIdHash)

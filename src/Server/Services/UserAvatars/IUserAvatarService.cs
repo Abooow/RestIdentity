@@ -13,8 +13,8 @@ public interface IUserAvatarService
     Task CreateDefaultAvatarAsync(ApplicationUser user);
     ValueTask<(string Location, string NormalizedContentType)> GetImageFileLocationAsync(string userHash, string contentType, int? size);
     Task<Result<UserAvatarChannelModel>> UploadAvatarForSignedInUserAsync(IFormFile file, InterpolationMode interpolationMode);
-    Task RemoveAvatarForSignedInUserAsync();
-    Task RemoveAvatarAsync(string userId);
+    Task<Result> RemoveAvatarForSignedInUserAsync();
+    Task<Result> RemoveAvatarAsync(string userId);
 
     Task CreateFromChannelAsync(UserAvatarChannelModel userAvatarChannelModel);
 }
