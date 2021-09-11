@@ -132,15 +132,15 @@ public sealed partial class AuthController : ControllerBase
             return Ok(Result.Success());
         }
 
-        IDataProtectionProvider protectorProvider = _serviceProvider.GetService<IDataProtectionProvider>();
-        IDataProtector protector = protectorProvider.CreateProtector(_dataProtectionKeys.ApplicationUserKey);
-        string userId = protector.Unprotect(protectedUserId);
+        string userId = _userService.GetSignedInUserId();
 
         TokenModel token = _context.Tokens.FirstOrDefault(x => x.UserId == userId);
         if (token is not null)
         {
             _context.Remove(token);
-            await _context.SaveChangesAsync();
+
+            await _activityService.AddUserActivityAsync(userId, ActivityConstants.AuthSignedOut);
+            // No need to call SaveChangesAsync, AddUserActivityAsync will do that.
         }
         else
             Log.Warning("Invalid userId was detected from user_id Cookie");
