@@ -11,21 +11,21 @@ namespace RestIdentity.Server.Migrations
                 name: "Identity");
 
             migrationBuilder.CreateTable(
-                name: "Activities",
+                name: "AuditLogs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     Type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Data = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     IpAddress = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     OperationgSystem = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Activities", x => x.Id);
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -242,17 +242,17 @@ namespace RestIdentity.Server.Migrations
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "8539b63f-1496-4d2f-b42a-73def32b3a1d", "Admin", "ADMIN" });
+                values: new object[] { "38EE6878-8E7A-479F-9819-B85FF05D2927", "75993b78-51a8-4272-9195-918bd0a55ab2", "Admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Identity",
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "080dffe8-25f3-44ce-a65f-513072035bc0", "Customer", "CUSTOMER" });
+                values: new object[] { "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5", "e84fba07-7076-4ed2-a01d-e8223ba57b38", "Customer", "CUSTOMER" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Activities_UserId",
-                table: "Activities",
+                name: "IX_AuditLogs_UserId",
+                table: "AuditLogs",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -310,7 +310,7 @@ namespace RestIdentity.Server.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Activities");
+                name: "AuditLogs");
 
             migrationBuilder.DropTable(
                 name: "RoleClaims",

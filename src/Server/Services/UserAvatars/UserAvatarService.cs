@@ -12,7 +12,7 @@ using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
 
@@ -22,7 +22,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ISignedInUserService _signedInUserService;
-    private readonly IActivityService _activityService;
+    private readonly IAuditLogService _auditLogService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly UserAvatarDefaultOptions _userAvatarOptions;
     private readonly UserAvatarChannel _userAvatarChannel;
@@ -30,14 +30,14 @@ internal sealed class UserAvatarService : IUserAvatarService
     public UserAvatarService(
         ApplicationDbContext dbContext,
         ISignedInUserService signedInUserService,
-        IActivityService activityService,
+        IAuditLogService auditLogService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<UserAvatarDefaultOptions> userAvatarOptions,
         UserAvatarChannel userAvatarChannel)
     {
         _dbContext = dbContext;
         _signedInUserService = signedInUserService;
-        _activityService = activityService;
+        _auditLogService = auditLogService;
         _fileStorageOptions = fileStorageOptions.Value;
         _userAvatarOptions = userAvatarOptions.Value;
         _userAvatarChannel = userAvatarChannel;
@@ -94,7 +94,7 @@ internal sealed class UserAvatarService : IUserAvatarService
             _dbContext.Update(existingUserAvatar);
             await _dbContext.SaveChangesAsync();
 
-            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.UserUpdatedDefaultAvatar);
+            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.UserUpdatedDefaultAvatar);
         }
 
         CreateDefaultUserAvatar(user, userIdHash);
@@ -152,7 +152,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         if (userAvatar is null)
             return Result.Fail($"Failed to remove your avatar.");
 
-        await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.UserRemovedAvatar);
+        await _auditLogService.AddAuditLogForSignInUserAsync(AuditLogsConstants.UserRemovedAvatar);
 
         return Result.Success("Your avatar has been successfully removed.");
     }
@@ -164,7 +164,7 @@ internal sealed class UserAvatarService : IUserAvatarService
             return Result.Fail($"Could not find user with Id: {userId}");
 
         string signedInUserId = _signedInUserService.GetUserId();
-        await _activityService.AddUserActivityAsync(userId, ActivityConstants.UserRemovedAvatar, $"REMOVED_BY: {signedInUserId}");
+        await _auditLogService.AddAuditLogAsync(userId, AuditLogsConstants.UserRemovedAvatar, $"REMOVED_BY: {signedInUserId}");
 
         return Result.Success($"Successfully removed User Avatar for user {userId}");
     }
@@ -198,7 +198,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
         File.Delete(userAvatarChannelModel.TempFilePath);
 
-        await _activityService.AddUserActivityAsync(userAvatarChannelModel.UserId, ActivityConstants.UserUpdatedAvatar);
+        await _auditLogService.AddAuditLogAsync(userAvatarChannelModel.UserId, AuditLogsConstants.UserUpdatedAvatar);
     }
 
     private static Image CreateAvatarImageWithText(string userInitials, int size, Color backgroundColor)

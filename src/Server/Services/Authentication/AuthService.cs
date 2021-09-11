@@ -11,7 +11,7 @@ using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
@@ -26,7 +26,7 @@ public sealed class AuthService : IAuthService
     private readonly IdentityDefaultOptions _identityOptions;
     private readonly JwtSettings _jwtSettings;
     private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly IActivityService _activityService;
+    private readonly IAuditLogService _auditLogService;
     private readonly IServiceProvider _provider;
 
     public AuthService(
@@ -35,14 +35,14 @@ public sealed class AuthService : IAuthService
         IOptions<IdentityDefaultOptions> identityOptions,
         IOptions<JwtSettings> jwtSettings,
         IOptions<DataProtectionKeys> dataProtectionKeys,
-        IActivityService activityService,
+        IAuditLogService auditLogService,
         IServiceProvider provider)
     {
         _userManager = userManager;
         _context = context;
         _identityOptions = identityOptions.Value;
         _jwtSettings = jwtSettings.Value;
-        _activityService = activityService;
+        _auditLogService = auditLogService;
         _dataProtectionKeys = dataProtectionKeys.Value;
         _provider = provider;
     }
@@ -60,7 +60,7 @@ public sealed class AuthService : IAuthService
         // Check Password.
         if (!await _userManager.CheckPasswordAsync(user, loginRequest.Password))
         {
-            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthInvalidPassword);
+            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthInvalidPassword);
 
             Log.Error("Error: Invalid Password for {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Invalid Email/Password.").AsBadRequest().WithDescription(StatusCodeDescriptions.InvalidCredentials);
@@ -69,7 +69,7 @@ public sealed class AuthService : IAuthService
         // Check Email Confirmed.
         if (_identityOptions.SignInRequreConfirmedEmail && !await _userManager.IsEmailConfirmedAsync(user))
         {
-            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthEmailNotConfirmed);
+            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthEmailNotConfirmed);
 
             Log.Error("Error: Email Not Confirmed {Email}", loginRequest.Email);
             return Result<TokenResponse>.Fail("Email Not Confirmed.").WithDescription(StatusCodeDescriptions.RequiresConfirmEmail);
@@ -77,7 +77,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthSignedIn);
+            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthSignedIn);
 
             TokenResponse authToken = await CreateAuthTokenAsync(user);
             Log.Information("User {Email} Signed In", user.Email);

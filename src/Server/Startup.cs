@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
@@ -48,7 +48,7 @@ public sealed class Startup
         services.ConfigureUserAvatarOptions(Configuration, nameof(UserAvatarDefaultOptions));
 
         services.AddTransient<IAuthService, AuthService>();
-        services.AddTransient<IActivityService, ActivityService>();
+        services.AddTransient<IAuditLogService, AuditLogService>();
 
         services.AddHttpContextAccessor();
         services.AddTransient<ICookieService, CookieService>();

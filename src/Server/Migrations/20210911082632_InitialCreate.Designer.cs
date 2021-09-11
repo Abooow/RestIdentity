@@ -10,7 +10,7 @@ using RestIdentity.Server.Data;
 namespace RestIdentity.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210911075918_InitialCreate")]
+    [Migration("20210911082632_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,14 +51,14 @@ namespace RestIdentity.Server.Migrations
                         new
                         {
                             Id = "38EE6878-8E7A-479F-9819-B85FF05D2927",
-                            ConcurrencyStamp = "8539b63f-1496-4d2f-b42a-73def32b3a1d",
+                            ConcurrencyStamp = "75993b78-51a8-4272-9195-918bd0a55ab2",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "14F48C9D-6E8D-4B1E-AE8B-10EB06E282B5",
-                            ConcurrencyStamp = "080dffe8-25f3-44ce-a65f-513072035bc0",
+                            ConcurrencyStamp = "e84fba07-7076-4ed2-a01d-e8223ba57b38",
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         });
@@ -168,45 +168,6 @@ namespace RestIdentity.Server.Migrations
                     b.ToTable("UserTokens", "Identity");
                 });
 
-            modelBuilder.Entity("RestIdentity.Server.Models.DAO.ActivityModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Data")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("OperationgSystem")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Activities");
-                });
-
             modelBuilder.Entity("RestIdentity.Server.Models.DAO.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -284,6 +245,45 @@ namespace RestIdentity.Server.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("Users", "Identity");
+                });
+
+            modelBuilder.Entity("RestIdentity.Server.Models.DAO.AuditLogModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OperationgSystem")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("RestIdentity.Server.Models.DAO.TokenModel", b =>

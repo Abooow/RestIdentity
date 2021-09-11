@@ -1,6 +1,6 @@
 ﻿namespace RestIdentity.Server.Constants;
 
-internal static class ActivityConstants
+internal static class AuditLogsConstants
 {
     public const string UnAuthorized = "AUTH.UNAUTHORIZED";
     public const string AuthInvalidPassword = "AUTH.INVALID.PASSWORD";
@@ -18,7 +18,7 @@ internal static class ActivityConstants
     public const string UserUpdatedAvatar = "USER.UPDATE.AVATAR";
     public const string UserRemovedAvatar = "USER.REMOVE.AVATAR";
 
-    public static readonly string[] PartialActivityTypes =
+    public static readonly string[] PartialAuditLogTypes =
     {
         AuthRegistered,
         AuthSignedIn,

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.User;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
@@ -17,14 +17,12 @@ namespace RestIdentity.Server.Controllers;
 public sealed class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IActivityService _activityService;
+    private readonly IAuditLogService _auditLogService;
 
-    public UsersController(
-        IUserService userService,
-        IActivityService activityService)
+    public UsersController(IUserService userService, IAuditLogService auditLogService)
     {
         _userService = userService;
-        _activityService = activityService;
+        _auditLogService = auditLogService;
     }
 
     [Authorize]
@@ -61,27 +59,27 @@ public sealed class UsersController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("my-activity")]
-    public async Task<IActionResult> GetMyActivity()
+    [HttpGet("my-auditLogs")]
+    public async Task<IActionResult> GetMyAuditLog()
     {
         string userId = _userService.GetSignedInUserId();
         if (userId is null)
-            return BadRequest(Result<IEnumerable<UserActivity>>.Fail(""));
+            return BadRequest(Result<IEnumerable<UserAuditLog>>.Fail(""));
 
-        (_, IEnumerable<ActivityModel> activities) = await _activityService.GetPartialUserActivitiesAsync(userId);
+        (_, IEnumerable<AuditLogModel> auditLogs) = await _auditLogService.GetPartialAuditLogsAsync(userId);
 
-        return Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)));
+        return Ok(Result<IEnumerable<UserAuditLog>>.Success(MapAuditLogs(auditLogs)));
     }
 
     [Authorize(AuthenticationSchemes = RolesConstants.Admin)]
-    [HttpGet("activities/{id}")]
-    public async Task<IActionResult> GetUserActivity(string id)
+    [HttpGet("auditLogs/{id}")]
+    public async Task<IActionResult> GetUserAuditLog(string id)
     {
-        (bool userFound, IEnumerable<ActivityModel> activities) = await _activityService.GetFullUserActivitiesAsync(id);
+        (bool userFound, IEnumerable<AuditLogModel> auditLogs) = await _auditLogService.GetFullAuditLogsAsync(id);
 
         return userFound
-            ? Ok(Result<IEnumerable<UserActivity>>.Success(MapActivities(activities)))
-            : BadRequest(Result<IEnumerable<UserActivity>>.Fail("User not found."));
+            ? Ok(Result<IEnumerable<UserAuditLog>>.Success(MapAuditLogs(auditLogs)))
+            : BadRequest(Result<IEnumerable<UserAuditLog>>.Fail("User not found."));
     }
 
     [Authorize]
@@ -95,11 +93,11 @@ public sealed class UsersController : ControllerBase
             : BadRequest(Result.Fail(updateProfileResult.Errors.Select(x => x.Description)));
     }
 
-    private static IEnumerable<UserActivity> MapActivities(IEnumerable<ActivityModel> activities)
+    private static IEnumerable<UserAuditLog> MapAuditLogs(IEnumerable<AuditLogModel> auditLogs)
     {
-        foreach (ActivityModel activity in activities)
+        foreach (AuditLogModel auditLog in auditLogs)
         {
-            yield return new UserActivity(activity.Type, activity.IpAddress, activity.Date);
+            yield return new UserAuditLog(auditLog.Type, auditLog.IpAddress, auditLog.Date);
         }
     }
 }

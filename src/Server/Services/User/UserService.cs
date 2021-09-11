@@ -7,7 +7,7 @@ using RestIdentity.Server.Constants;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.UserAvatars;
 using RestIdentity.Shared.Models;
@@ -23,7 +23,7 @@ internal sealed class UserService : IUserService
     private readonly ISignedInUserService _signedInUserInfoService;
     private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IUrlHelperFactory _urlHelperFactory;
-    private readonly IActivityService _activityService;
+    private readonly IAuditLogService _auditLogService;
     private readonly IUserAvatarService _userAvatarService;
 
     public UserService(
@@ -31,14 +31,14 @@ internal sealed class UserService : IUserService
         ISignedInUserService signedInUserInfoService,
         IActionContextAccessor actionContextAccessor,
         IUrlHelperFactory urlHelperFactory,
-        IActivityService activityService,
+        IAuditLogService auditLogService,
         IUserAvatarService userAvatarService)
     {
         _userManager = userManager;
         _signedInUserInfoService = signedInUserInfoService;
         _actionContextAccessor = actionContextAccessor;
         _urlHelperFactory = urlHelperFactory;
-        _activityService = activityService;
+        _auditLogService = auditLogService;
         _userAvatarService = userAvatarService;
     }
 
@@ -62,7 +62,7 @@ internal sealed class UserService : IUserService
         Log.Information("Customer User {Email} registered", user.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Customer);
 
-        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthRegistered);
+        await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthRegistered);
 
         return Result<ApplicationUser>.Success(user);
     }
@@ -95,8 +95,8 @@ internal sealed class UserService : IUserService
         Log.Information("Admin User {Email} registered by {SignInUser}", user.Email, signedInUser.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Admin);
 
-        await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.CreateAdminUser, "USER_ID: " + user.Id);
-        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.AuthRegistered);
+        await _auditLogService.AddAuditLogForSignInUserAsync(AuditLogsConstants.CreateAdminUser, "USER_ID: " + user.Id);
+        await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthRegistered);
 
         return Result<ApplicationUser>.Success(user);
     }
@@ -185,7 +185,7 @@ internal sealed class UserService : IUserService
         IdentityResult updateProfileResult = await _userManager.UpdateAsync(user);
 
         Log.Information("User profile for user {Email} has been updated", user.Email);
-        await _activityService.AddUserActivityAsync(user.Id, ActivityConstants.UserProfileUpdated, $"OLD_PROFILE: {oldProfile}");
+        await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.UserProfileUpdated, $"OLD_PROFILE: {oldProfile}");
 
         return new IdentityUserResult(updateProfileResult, user);
     }
@@ -203,7 +203,7 @@ internal sealed class UserService : IUserService
         if (changePasswordResult.Succeeded)
         {
             Log.Information("Changed Password for User {Email}", loggedInUserResult.Email);
-            await _activityService.AddUserActivityAsync(loggedInUserResult.Id, ActivityConstants.AuthChangePassword);
+            await _auditLogService.AddAuditLogAsync(loggedInUserResult.Id, AuditLogsConstants.AuthChangePassword);
         }
 
         return new IdentityUserResult(changePasswordResult, loggedInUserResult);
@@ -222,7 +222,7 @@ internal sealed class UserService : IUserService
         if (changePasswordResult.Succeeded)
         {
             Log.Information("Changed Password for another User {Email}", user.Email);
-            await _activityService.AddUserActivityForSignInUserAsync(ActivityConstants.AuthChangeOtherPassword, "USER_ID: " + user.Id);
+            await _auditLogService.AddAuditLogForSignInUserAsync(AuditLogsConstants.AuthChangeOtherPassword, "USER_ID: " + user.Id);
         }
 
         return new IdentityUserResult(changePasswordResult, user);

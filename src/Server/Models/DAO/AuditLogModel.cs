@@ -2,7 +2,7 @@
 
 namespace RestIdentity.Server.Models.DAO;
 
-public class ActivityModel
+public class AuditLogModel
 {
     [Key]
     public int Id { get; set; }
@@ -16,7 +16,7 @@ public class ActivityModel
     public string Type { get; set; }
 
     [MaxLength(200)]
-    public string Data { get; set; }
+    public string Description { get; set; }
 
     [MaxLength(100)]
     public string IpAddress { get; set; }

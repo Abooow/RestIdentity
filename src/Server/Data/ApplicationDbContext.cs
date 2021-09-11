@@ -9,7 +9,7 @@ namespace RestIdentity.Server.Data;
 public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<TokenModel> Tokens { get; set; }
-    public DbSet<ActivityModel> Activities { get; set; }
+    public DbSet<AuditLogModel> AuditLogs { get; set; }
     public DbSet<UserAvatarModel> UserAvatars { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -25,7 +25,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             new() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized },
             new() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized });
 
-        builder.Entity<ActivityModel>()
+        builder.Entity<AuditLogModel>()
             .HasIndex(b => b.UserId);
 
         builder.Entity<ApplicationUser>(entity =>

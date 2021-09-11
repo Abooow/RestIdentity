@@ -9,7 +9,7 @@ using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.Activity;
+using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
@@ -34,7 +34,7 @@ public sealed partial class AuthController : ControllerBase
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEmailSender _emailSender;
-    private readonly IActivityService _activityService;
+    private readonly IAuditLogService _auditLogService;
     private readonly IAuthService _authService;
     private readonly ICookieService _cookieService;
     private readonly IUserService _userService;
@@ -50,7 +50,7 @@ public sealed partial class AuthController : ControllerBase
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IServiceProvider serviceProvider,
         IEmailSender emailSender,
-        IActivityService activityService,
+        IAuditLogService auditLogService,
         IAuthService authService,
         ICookieService cookieService,
         IUserService userService)
@@ -63,7 +63,7 @@ public sealed partial class AuthController : ControllerBase
         _dataProtectionKeys = dataProtectionKeys.Value;
         _serviceProvider = serviceProvider;
         _emailSender = emailSender;
-        _activityService = activityService;
+        _auditLogService = auditLogService;
         _authService = authService;
         _cookieService = cookieService;
         _userService = userService;
@@ -139,8 +139,8 @@ public sealed partial class AuthController : ControllerBase
         {
             _context.Remove(token);
 
-            await _activityService.AddUserActivityAsync(userId, ActivityConstants.AuthSignedOut);
-            // No need to call SaveChangesAsync, AddUserActivityAsync will do that.
+            await _auditLogService.AddAuditLogAsync(userId, AuditLogsConstants.AuthSignedOut);
+            // No need to call SaveChangesAsync, AddAuditLogAsync will do that.
         }
         else
             Log.Warning("Invalid userId was detected from user_id Cookie");
