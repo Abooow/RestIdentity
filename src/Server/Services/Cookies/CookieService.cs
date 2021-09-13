@@ -14,6 +14,16 @@ public class CookieService : ICookieService
         return _httpContextAccessor.HttpContext.Request.Cookies[key];
     }
 
+    public string GetRemoteIpAddress()
+    {
+        return _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "::1";
+    }
+
+    public string GetRemoteOperatingSystem()
+    {
+        return _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"] ?? "UNKNOWN";
+    }
+
     public void SetCookie(string key, string value, DateTime? expireTime)
     {
         var cookieOptions = new CookieOptions

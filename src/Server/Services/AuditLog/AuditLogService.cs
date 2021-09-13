@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.RemoteConnectionInfo;
+using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.SignedInUser;
 using Serilog;
 
@@ -14,18 +14,18 @@ public sealed class AuditLogService : IAuditLogService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISignedInUserService _signedInUserService;
     private readonly ApplicationDbContext _context;
-    private readonly IRemoteConnectionInfoService _remoteConnectionService;
+    private readonly ICookieService _cookieService;
 
     public AuditLogService(
         UserManager<ApplicationUser> userManager,
         ISignedInUserService signedInUserService,
         ApplicationDbContext context,
-        IRemoteConnectionInfoService remoteConnectionService)
+        ICookieService cookieService)
     {
         _userManager = userManager;
         _signedInUserService = signedInUserService;
         _context = context;
-        _remoteConnectionService = remoteConnectionService;
+        _cookieService = cookieService;
     }
 
     public Task AddAuditLogForSignInUserAsync(string type)
@@ -57,8 +57,8 @@ public sealed class AuditLogService : IAuditLogService
             Type = type,
             Description = description,
             UserId = userId,
-            IpAddress = _remoteConnectionService.GetRemoteIpAddress(),
-            OperationgSystem = _remoteConnectionService.GetRemoteOperatingSystem(),
+            IpAddress = _cookieService.GetRemoteIpAddress(),
+            OperationgSystem = _cookieService.GetRemoteOperatingSystem(),
             Date = DateTime.UtcNow
         };
 
