@@ -1,5 +1,7 @@
-﻿using RestIdentity.Server.Models;
+﻿using Microsoft.Extensions.Options;
+using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Options;
+using RestIdentity.Server.Services.WritableSettings;
 
 namespace RestIdentity.Server.Extensions;
 
@@ -60,5 +62,18 @@ internal static class ServiceCollectionConfigurationExtensions
         services.Configure<UserAvatarDefaultOptions>(userAvatarOptionsSection);
 
         return userAvatarOptionsSection.Get<UserAvatarDefaultOptions>();
+    }
+
+    public static void ConfigureWritable<T>(this IServiceCollection services, IConfigurationSection section, string fileName) where T : class, new()
+    {
+        services.Configure<T>(section);
+
+        services.AddTransient(provider =>
+        {
+            IWebHostEnvironment enviroment = provider.GetService<IWebHostEnvironment>();
+            IOptionsMonitor<T> options = provider.GetService<IOptionsMonitor<T>>();
+
+            return new WritableSettingsService<T>(enviroment, options, section.Key, fileName);
+        });
     }
 }
