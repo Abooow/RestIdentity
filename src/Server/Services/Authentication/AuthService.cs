@@ -77,10 +77,10 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthSignedIn);
-
             TokenResponse authToken = await CreateAuthTokenAsync(user);
             Log.Information("User {Email} Signed In", user.Email);
+
+            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthSignedIn);
             return Result<TokenResponse>.Success(authToken);
         }
         catch (Exception e)
