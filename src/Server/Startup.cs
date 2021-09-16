@@ -7,6 +7,7 @@ using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.Authentication;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.EmailSenders;
+using RestIdentity.Server.Services.FunctionalServices;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.User;
 
@@ -35,10 +36,10 @@ public sealed class Startup
         services.ConfigureDataProtectionKeys(Configuration, nameof(DataProtectionKeys));
         services.AddDataProtectionKeys(Configuration.GetConnectionString("DataProtectionKeysConnection"));
 
-        // JWT Authentication.
-        JwtSettings jwtSettings = services.ConfigureJwtSettings(Configuration, nameof(JwtSettings));
-        services.AddJwtAuthentication(jwtSettings);
-        services.AddAdminSchemeAuthentication();
+        // Authentication.
+        services.ConfigureJwtSettings(Configuration, nameof(JwtSettings));
+        services.AddCustomerAuthentication();
+        services.AddAdminAuthentication();
 
         // File Storage.
         services.ConfigureFileStorageOptions(Configuration, nameof(FileStorageOptions));
@@ -57,6 +58,8 @@ public sealed class Startup
         services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
         services.AddTransient<IEmailSender, FileEmailSender>();
+
+        services.AddTransient<IFunctionalService, FunctionalService>();
 
         // MVC.
         services.AddControllers().AddInvalidModelStateResponse();

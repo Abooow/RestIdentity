@@ -73,7 +73,7 @@ public sealed class AuditLogService : IAuditLogService
 
         AuditLogModel[] auditLogs = await _context.AuditLogs
             .Where(x => x.UserId == userId && AuditLogsConstants.PartialAuditLogTypes.Contains(x.Type))
-            .OrderBy(x => x.Date)
+            .OrderByDescending(x => x.Date)
             .ToArrayAsync();
 
         return (true, auditLogs);
@@ -87,7 +87,7 @@ public sealed class AuditLogService : IAuditLogService
 
         AuditLogModel[] auditLogs = await _context.AuditLogs
             .Where(x => x.UserId == userId)
-            .OrderBy(x => x.Date)
+            .OrderByDescending(x => x.Date)
             .ToArrayAsync();
 
         return (true, auditLogs);

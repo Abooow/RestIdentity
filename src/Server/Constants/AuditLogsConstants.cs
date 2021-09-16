@@ -2,7 +2,8 @@
 
 internal static class AuditLogsConstants
 {
-    public const string UnAuthorized = "AUTH.UNAUTHORIZED";
+    public const string UnAuthorizedUserAccessedProtectedEndpoint = "AUTH.UNAUTHORIZED_USER.ACCESSED_PROTECTED_ENDPOINT";
+
     public const string AuthInvalidPassword = "AUTH.INVALID.PASSWORD";
     public const string AuthEmailNotConfirmed = "AUTH.EMAIL_NOT_CONFIRMED";
     public const string AuthSignedIn = "AUTH.SIGN_IN";

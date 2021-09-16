@@ -30,9 +30,6 @@ public sealed partial class AuthController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UrlEncoder _urlEncoder;
-    private readonly JwtSettings _jwtSettings;
-    private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IEmailSender _emailSender;
     private readonly IAuditLogService _auditLogService;
     private readonly IAuthService _authService;
@@ -46,9 +43,6 @@ public sealed partial class AuthController : ControllerBase
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         UrlEncoder urlEncoder,
-        IOptions<JwtSettings> jwtSettings,
-        IOptions<DataProtectionKeys> dataProtectionKeys,
-        IServiceProvider serviceProvider,
         IEmailSender emailSender,
         IAuditLogService auditLogService,
         IAuthService authService,
@@ -59,9 +53,6 @@ public sealed partial class AuthController : ControllerBase
         _userManager = userManager;
         _signInManager = signInManager;
         _urlEncoder = urlEncoder;
-        _jwtSettings = jwtSettings.Value;
-        _dataProtectionKeys = dataProtectionKeys.Value;
-        _serviceProvider = serviceProvider;
         _emailSender = emailSender;
         _auditLogService = auditLogService;
         _authService = authService;

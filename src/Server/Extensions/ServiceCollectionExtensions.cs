@@ -1,16 +1,12 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.DAO;
-using RestIdentity.Server.Services.FunctionalServices;
-using RestIdentity.Server.Services.Handlers;
+using RestIdentity.Server.Services.AuthenticationHandler;
 
 namespace RestIdentity.Server.Extensions;
 
@@ -52,34 +48,23 @@ internal static class ServiceCollectionExtensions
            .AddDefaultTokenProviders();
     }
 
-    public static AuthenticationBuilder AddJwtAuthentication(this IServiceCollection services, JwtSettings jwtSettings)
+    public static AuthenticationBuilder AddCustomerAuthentication(this IServiceCollection services)
     {
-        byte[] key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
+        services.AddTransient<ICustomAuthenticationHandler, CustomAuthenticationHandler>();
 
         return services.AddAuthentication(x =>
         {
-            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters()
-            {
-                ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
-                ValidateIssuer = jwtSettings.ValidateIssuer,
-                ValidateAudience = jwtSettings.ValidateAudience,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+            x.DefaultChallengeScheme = RolesConstants.Customer;
+            x.DefaultSignInScheme = RolesConstants.Customer;
+            x.DefaultAuthenticateScheme = RolesConstants.Customer;
+            x.DefaultScheme = RolesConstants.Customer;
+        })
+            .AddScheme<CustomerAuthenticationOptions, CustomerAuthenticationHandler>(RolesConstants.Customer, null);
     }
 
-    public static AuthenticationBuilder AddAdminSchemeAuthentication(this IServiceCollection services)
+    public static AuthenticationBuilder AddAdminAuthentication(this IServiceCollection services)
     {
-        services.AddTransient<IFunctionalService, FunctionalService>();
+        services.AddTransient<ICustomAuthenticationHandler, CustomAuthenticationHandler>();
 
         return services.AddAuthentication(RolesConstants.Admin)
             .AddScheme<AdminAuthenticationOptions, AdminAuthenticationHandler>(RolesConstants.Admin, null);

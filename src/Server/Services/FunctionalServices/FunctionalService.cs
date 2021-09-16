@@ -39,7 +39,7 @@ public sealed class FunctionalService : IFunctionalService
             DateCreated = DateTime.UtcNow
         };
 
-        return CreateUserAsync(adminUser, _adminUserOptions.Password, RolesConstants.Admin);
+        return CreateUserAsync(adminUser, _adminUserOptions.Password, RolesConstants.Admin, RolesConstants.Customer);
     }
 
     public Task CreateDefaultCustomerUserAsync()
@@ -57,7 +57,7 @@ public sealed class FunctionalService : IFunctionalService
         return CreateUserAsync(customerUser, _customerUserOptions.Password, RolesConstants.Customer);
     }
 
-    private async Task CreateUserAsync(ApplicationUser user, string password, string role)
+    private async Task CreateUserAsync(ApplicationUser user, string password, params string[] roles)
     {
         try
         {
@@ -72,13 +72,16 @@ public sealed class FunctionalService : IFunctionalService
             }
 
             await _userAvatarService.CreateDefaultAvatarAsync(user);
-            await _userManager.AddToRoleAsync(user, role);
+            foreach (string role in roles)
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
 
-            Log.Information($"{role} user was successfully created. ({{UserName}})", user.UserName);
+            Log.Information($"User with roles: ({string.Join(", ", roles)}) was successfully created. ({{UserName}})", user.UserName);
         }
         catch (Exception e)
         {
-            Log.Error($"An Error occurred while creating {role} user {{Error}} {{StackTrace}} {{InnerException}} {{Source}}",
+            Log.Error($"An Error occurred while creating a User with roles: ({string.Join(", ", roles)}) {{Error}} {{StackTrace}} {{InnerException}} {{Source}}",
                 e.Message, e.StackTrace, e.InnerException, e.Source);
         }
     }
