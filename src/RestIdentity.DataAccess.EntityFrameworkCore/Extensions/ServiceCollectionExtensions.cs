@@ -17,14 +17,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IdentityBuilder AddRepositories(this IServiceCollection services, Action<IdentityOptions> userSetupAction)
+    public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddTransient<IUserAvatarRepository, UserAvatarRepository>();
         services.AddTransient<IAuditLogRepository, AuditLogRepository>();
         services.AddTransient<ITokenRepository, TokenRepository>();
 
+        return services;
+    }
+
+    public static IdentityBuilder AddIdentityUserRepository(this IServiceCollection services, Action<IdentityOptions> userSetupAction)
+    {
         return services.AddIdentity<UserDao, IdentityRole>(userSetupAction)
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
+            .AddEntityFrameworkStores<ApplicationDbContext>();
     }
 }

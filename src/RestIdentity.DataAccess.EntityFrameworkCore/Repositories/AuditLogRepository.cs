@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
@@ -14,11 +15,15 @@ internal class AuditLogRepository : IAuditLogRepository
     private readonly UserManager<UserDao> _userManager;
     private readonly ILogger<AuditLogRepository> _logger;
 
-    public AuditLogRepository(ApplicationDbContext context, UserManager<UserDao> userManager, ILogger<AuditLogRepository> logger)
+    public AuditLogRepository(ApplicationDbContext context, IServiceProvider serviceProvider, ILogger<AuditLogRepository> logger)
     {
         _context = context;
-        _userManager = userManager;
         _logger = logger;
+
+        _userManager = serviceProvider.GetService<UserManager<UserDao>>()
+            ?? throw new InvalidOperationException(
+                "Type UserManager<UserDao> has not been registered. " +
+                "Use the AddIdentityUserRepository() method to register the required UserManager, which can be found in the RestIdentity.DataAccess namespace.");
     }
 
     public async Task AddAuditLogAsync(AuditLogDao auditLog)
