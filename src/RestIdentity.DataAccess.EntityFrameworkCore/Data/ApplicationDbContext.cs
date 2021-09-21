@@ -20,10 +20,6 @@ internal sealed class ApplicationDbContext : IdentityDbContext<UserDao>
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<IdentityRole>().HasData(
-            new() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized },
-            new() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized });
-
         builder.Entity<AuditLogDao>()
             .HasIndex(b => b.UserId);
 

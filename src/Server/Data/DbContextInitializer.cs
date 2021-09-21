@@ -10,10 +10,13 @@ public static class DbContextInitializer
         await dataProtectionKeysContext.Database.EnsureCreatedAsync();
         await databaseInitializer.EnsureCreatedAsync();
 
-        if (await functionalService.AnyUsersExistsAsync())
-            return;
+        if (!await functionalService.AnyRolesExistsAsync())
+            await functionalService.CreateDefaultRolesAsync();
 
-        await functionalService.CreateDefaultAdminUserAsync();
-        await functionalService.CreateDefaultCustomerUserAsync();
+        if (!await functionalService.AnyUsersExistsAsync())
+        {
+            await functionalService.CreateDefaultAdminUserAsync();
+            await functionalService.CreateDefaultCustomerUserAsync();
+        }
     }
 }
