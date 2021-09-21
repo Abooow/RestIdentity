@@ -47,7 +47,7 @@ public sealed class AuditLogService : IAuditLogService
 
     public Task AddAuditLogAsync(string userId, string type, string description)
     {
-        var auditLog = new AuditLogDao()
+        var auditLog = new AuditLogRecord()
         {
             Type = type,
             Description = description,
@@ -59,17 +59,17 @@ public sealed class AuditLogService : IAuditLogService
         return _auditLogsRepository.AddAuditLogAsync(auditLog);
     }
 
-    public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetPartialAuditLogsAsync(string userId)
+    public async Task<(bool UserFound, IEnumerable<AuditLogRecord> AuditLogs)> GetPartialAuditLogsAsync(string userId)
     {
-        IEnumerable<AuditLogDao> auditLogs = await _auditLogsRepository.GetPartialAuditLogsAsync(userId, AuditLogsConstants.PartialAuditLogTypes);
+        IEnumerable<AuditLogRecord> auditLogs = await _auditLogsRepository.GetPartialAuditLogsAsync(userId, AuditLogsConstants.PartialAuditLogTypes);
 
-        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
+        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogRecord>());
     }
 
-    public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetFullAuditLogsAsync(string userId)
+    public async Task<(bool UserFound, IEnumerable<AuditLogRecord> AuditLogs)> GetFullAuditLogsAsync(string userId)
     {
-        IEnumerable<AuditLogDao> auditLogs = await _auditLogsRepository.GetAuditLogsAsync(userId);
+        IEnumerable<AuditLogRecord> auditLogs = await _auditLogsRepository.GetAuditLogsAsync(userId);
 
-        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
+        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogRecord>());
     }
 }

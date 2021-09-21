@@ -25,12 +25,12 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
         return userIdHash;
     }
 
-    public string CreateAvatarHashForUser(UserDao user)
+    public string CreateAvatarHashForUser(UserRecord user)
     {
         return CreateAvatarHashForUser(user.Id);
     }
 
-    public Task<UserAvatarDao?> FindByUserIdAsync(string userId)
+    public Task<UserAvatarRecord?> FindByUserIdAsync(string userId)
     {
         return _dbContext.UserAvatars
             .Where(x => x.UserId == userId)
@@ -38,7 +38,7 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
             .FirstOrDefaultAsync()!;
     }
 
-    public Task<UserAvatarDao?> FindByUserNameAsync(string userName)
+    public Task<UserAvatarRecord?> FindByUserNameAsync(string userName)
     {
         userName = userName.ToUpperInvariant();
         var query = from u in _dbContext.Users
@@ -49,7 +49,7 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
         return query.FirstOrDefaultAsync();
     }
 
-    public Task<UserAvatarDao?> FindByAvatarHashAsync(string avatarHash)
+    public Task<UserAvatarRecord?> FindByAvatarHashAsync(string avatarHash)
     {
         avatarHash = avatarHash.ToUpperInvariant();
 
@@ -59,9 +59,9 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
             .FirstOrDefaultAsync()!;
     }
 
-    public async Task<UserAvatarDao> AddUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarRecord> AddUserAvatarAsync(UserRecord user)
     {
-        var userAvatar = new UserAvatarDao(user)
+        var userAvatar = new UserAvatarRecord(user)
         {
             AvatarHash = CreateAvatarHashForUser(user)
         };
@@ -72,16 +72,16 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
         return userAvatar;
     }
 
-    public async Task<UserAvatarDao> AddOrUpdateUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarRecord> AddOrUpdateUserAvatarAsync(UserRecord user)
     {
         return await UserHasAvatar(user.Id)
             ? (await UpdateUserAvatarAsync(user))!
             : await AddUserAvatarAsync(user);
     }
 
-    public async Task<UserAvatarDao?> UpdateUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarRecord?> UpdateUserAvatarAsync(UserRecord user)
     {
-        UserAvatarDao? existingUserAvatar = await FindByUserIdAsync(user.Id);
+        UserAvatarRecord? existingUserAvatar = await FindByUserIdAsync(user.Id);
 
         if (existingUserAvatar is null)
             return null;
@@ -94,12 +94,12 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
         return existingUserAvatar;
     }
 
-    public Task<UserAvatarDao?> UseDefaultAvatarForUserAsync(string userId)
+    public Task<UserAvatarRecord?> UseDefaultAvatarForUserAsync(string userId)
     {
         return UpdateUserAvatarAsync(userId, null);
     }
 
-    public Task<UserAvatarDao?> UseAvatarForUserAsync(string userId, string imageExtension)
+    public Task<UserAvatarRecord?> UseAvatarForUserAsync(string userId, string imageExtension)
     {
         return UpdateUserAvatarAsync(userId, imageExtension);
     }
@@ -109,9 +109,9 @@ internal class UserAvatarsRepository : IUserAvatarsRepository
         return _dbContext.UserAvatars.Where(x => x.UserId == userId).AnyAsync();
     }
 
-    private async Task<UserAvatarDao?> UpdateUserAvatarAsync(string userId, string? imageExtension)
+    private async Task<UserAvatarRecord?> UpdateUserAvatarAsync(string userId, string? imageExtension)
     {
-        UserAvatarDao? userAvatar = await FindByUserIdAsync(userId);
+        UserAvatarRecord? userAvatar = await FindByUserIdAsync(userId);
         if (userAvatar is null)
             return null;
 

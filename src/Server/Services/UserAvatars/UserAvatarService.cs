@@ -1,8 +1,6 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Security.Cryptography;
-using System.Text;
 using ImageMagick;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -10,7 +8,6 @@ using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.BackgroundServices.Channels;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.AuditLog;
@@ -44,31 +41,31 @@ internal sealed class UserAvatarService : IUserAvatarService
         _userAvatarChannel = userAvatarChannel;
     }
 
-    public Task<UserAvatarDao> FindByUserIdAsync(string userId)
+    public Task<UserAvatarRecord> FindByUserIdAsync(string userId)
     {
         return _userAvatarsRepository.FindByUserIdAsync(userId);
     }
 
-    public Task<UserAvatarDao> FindByUserNameAsync(string userName)
+    public Task<UserAvatarRecord> FindByUserNameAsync(string userName)
     {
         return _userAvatarsRepository.FindByUserNameAsync(userName);
     }
 
-    public Task<UserAvatarDao> FindByAvatarHashAsync(string avatarHash)
+    public Task<UserAvatarRecord> FindByAvatarHashAsync(string avatarHash)
     {
         return _userAvatarsRepository.FindByAvatarHashAsync(avatarHash);
     }
 
-    public async Task CreateDefaultAvatarAsync(UserDao user)
+    public async Task CreateDefaultAvatarAsync(UserRecord user)
     {
-        UserAvatarDao userAvatar = await _userAvatarsRepository.AddOrUpdateUserAvatarAsync(user);
+        UserAvatarRecord userAvatar = await _userAvatarsRepository.AddOrUpdateUserAvatarAsync(user);
 
         CreateDefaultUserAvatar(user, userAvatar.AvatarHash);
     }
 
     public async ValueTask<(string Location, string NormalizedContentType)> GetImageFileLocationAsync(string userHash, string contentType, int? size)
     {
-        UserAvatarDao userAvatar = await FindByAvatarHashAsync(userHash);
+        UserAvatarRecord userAvatar = await FindByAvatarHashAsync(userHash);
         if (userAvatar is null)
             throw new Exception($"Could not find a User Avatar with userHash: {userHash}"); // TODO: Change to a good Exception type with a good message.
 
@@ -114,7 +111,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task<Result> RemoveAvatarForSignedInUserAsync()
     {
-        UserAvatarDao userAvatar = await RemoveUserAvatarAsync(_signedInUserService.GetUserId());
+        UserAvatarRecord userAvatar = await RemoveUserAvatarAsync(_signedInUserService.GetUserId());
         if (userAvatar is null)
             return Result.Fail($"Failed to remove your avatar.");
 
@@ -125,7 +122,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task<Result> RemoveAvatarAsync(string userId)
     {
-        UserAvatarDao userAvatar = await RemoveUserAvatarAsync(userId);
+        UserAvatarRecord userAvatar = await RemoveUserAvatarAsync(userId);
         if (userAvatar is null)
             return Result.Fail($"Could not find user with Id: {userId}");
 
@@ -235,9 +232,9 @@ internal sealed class UserAvatarService : IUserAvatarService
         await _userAvatarsRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "gif");
     }
 
-    private async Task<UserAvatarDao> RemoveUserAvatarAsync(string userId)
+    private async Task<UserAvatarRecord> RemoveUserAvatarAsync(string userId)
     {
-        UserAvatarDao userAvatar = await _userAvatarsRepository.UseDefaultAvatarForUserAsync(userId);
+        UserAvatarRecord userAvatar = await _userAvatarsRepository.UseDefaultAvatarForUserAsync(userId);
         if (userAvatar is null)
             return null;
 
@@ -252,7 +249,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         return userAvatar;
     }
 
-    private void CreateDefaultUserAvatar(UserDao user, string userIdHash)
+    private void CreateDefaultUserAvatar(UserRecord user, string userIdHash)
     {
         Color backgroundColor = GetRandomColor();
         string userInitials = $"{user.FirstName[0]}{user.LastName[0]}".ToUpperInvariant();

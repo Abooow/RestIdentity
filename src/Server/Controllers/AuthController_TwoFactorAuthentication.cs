@@ -19,7 +19,7 @@ public sealed partial class AuthController
         [FromHeader(Name = "Identity.TwoFactorUserId")][Required(ErrorMessage = "The header Identity.TwoFactorUserId is requred")] string _,
         [FromBody] LoginWith2faRequest request)
     {
-        UserDao user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        UserRecord user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
             return NotFound(Result.Fail("Unable to load two-factor authentication user.").AsNotFound());
 
@@ -34,7 +34,7 @@ public sealed partial class AuthController
     [HttpPost("enableTwoFactorAuth")]
     public async Task<IActionResult> EnableTwoFactorAuth()
     {
-        UserDao user = await _userManager.GetUserAsync(User);
+        UserRecord user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail($"Unable to load user.").AsNotFound());
 
@@ -60,7 +60,7 @@ public sealed partial class AuthController
     [HttpPost("disableTwoFactorAuth")]
     public async Task<IActionResult> DisableTwoFactorAuth()
     {
-        UserDao user = await _userManager.GetUserAsync(User);
+        UserRecord user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail($"Unable to load user.").AsNotFound());
 
@@ -93,7 +93,7 @@ public sealed partial class AuthController
     [HttpGet("generateRecoveryCodes")]
     public async Task<IActionResult> GenerateRecoveryCodes()
     {
-        UserDao user = await _userManager.GetUserAsync(User);
+        UserRecord user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail("Unable to load user.").AsNotFound());
 
@@ -113,7 +113,7 @@ public sealed partial class AuthController
         [FromHeader(Name = "Identity.TwoFactorUserId")][Required(ErrorMessage = "The header Identity.TwoFactorUserId is requred")] string _,
         LoginWithRecoveryCodeRequest loginWithRecoveryRequest)
     {
-        UserDao user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        UserRecord user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
             return BadRequest(Result.Fail("Unable to load two-factor authentication user.").AsBadRequest());
 

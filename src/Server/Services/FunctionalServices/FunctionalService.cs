@@ -12,14 +12,14 @@ namespace RestIdentity.Server.Services.FunctionalServices;
 
 public sealed class FunctionalService : IFunctionalService
 {
-    private readonly UserManager<UserDao> _userManager;
+    private readonly UserManager<UserRecord> _userManager;
     private readonly IRolesRepository _rolesRepository;
     private readonly IUserAvatarService _userAvatarService;
     private readonly AdminUserOptions _adminUserOptions;
     private readonly CustomerUserOptions _customerUserOptions;
 
     public FunctionalService(
-        UserManager<UserDao> userManager,
+        UserManager<UserRecord> userManager,
         IRolesRepository rolesRepository,
         IUserAvatarService userAvatarService,
         IOptions<AdminUserOptions> adminUserOptions,
@@ -52,7 +52,7 @@ public sealed class FunctionalService : IFunctionalService
 
     public Task CreateDefaultAdminUserAsync()
     {
-        var adminUser = new UserDao()
+        var adminUser = new UserRecord()
         {
             Email = _adminUserOptions.Email,
             UserName = _adminUserOptions.Username,
@@ -67,7 +67,7 @@ public sealed class FunctionalService : IFunctionalService
 
     public Task CreateDefaultCustomerUserAsync()
     {
-        var customerUser = new UserDao()
+        var customerUser = new UserRecord()
         {
             Email = _customerUserOptions.Email,
             UserName = _customerUserOptions.Username,
@@ -80,7 +80,7 @@ public sealed class FunctionalService : IFunctionalService
         return CreateUserAsync(customerUser, _customerUserOptions.Password, RolesConstants.Customer);
     }
 
-    private async Task CreateUserAsync(UserDao user, string password, params string[] roles)
+    private async Task CreateUserAsync(UserRecord user, string password, params string[] roles)
     {
         try
         {

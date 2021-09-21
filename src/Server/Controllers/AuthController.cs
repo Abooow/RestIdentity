@@ -25,8 +25,8 @@ namespace RestIdentity.Server.Controllers;
 [ApiController]
 public sealed partial class AuthController : ControllerBase
 {
-    private readonly UserManager<UserDao> _userManager;
-    private readonly SignInManager<UserDao> _signInManager;
+    private readonly UserManager<UserRecord> _userManager;
+    private readonly SignInManager<UserRecord> _signInManager;
     private readonly UrlEncoder _urlEncoder;
     private readonly ITokensRepository _tokensRepository;
     private readonly IEmailSender _emailSender;
@@ -38,8 +38,8 @@ public sealed partial class AuthController : ControllerBase
     private readonly string[] _cookiesToDelete = new string[] { CookieConstants.AccessToken, CookieConstants.UserId, CookieConstants.UserName };
 
     public AuthController(
-        UserManager<UserDao> userManager,
-        SignInManager<UserDao> signInManager,
+        UserManager<UserRecord> userManager,
+        SignInManager<UserRecord> signInManager,
         UrlEncoder urlEncoder,
         ITokensRepository tokensRepository,
         IEmailSender emailSender,
@@ -63,7 +63,7 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest registerRequest)
     {
-        Result<UserDao> registerUserReult = await _userService.RegisterUserAsync(registerRequest);
+        Result<UserRecord> registerUserReult = await _userService.RegisterUserAsync(registerRequest);
 
         if (!registerUserReult.Succeeded)
         {
@@ -80,7 +80,7 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("registerAdmin")]
     public async Task<IActionResult> RegisterAdmin(RegisterRequest registerRequest)
     {
-        Result<UserDao> registerUserReult = await _userService.RegisterAdminUserAsync(registerRequest);
+        Result<UserRecord> registerUserReult = await _userService.RegisterAdminUserAsync(registerRequest);
 
         if (!registerUserReult.Succeeded)
         {
@@ -124,7 +124,7 @@ public sealed partial class AuthController : ControllerBase
 
         string userId = _userService.GetSignedInUserId();
 
-        TokenDao token = await _tokensRepository.GetUserTokenAsync(userId);
+        TokenRecord token = await _tokensRepository.GetUserTokenAsync(userId);
         if (token is not null)
         {
             await _tokensRepository.RemoveAllUserTokensAsync(userId);
@@ -146,7 +146,7 @@ public sealed partial class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(code))
             return BadRequest(Result.Fail("User Id and Code are required.").AsBadRequest());
 
-        UserDao user = await _userManager.FindByIdAsync(userId);
+        UserRecord user = await _userManager.FindByIdAsync(userId);
         if (user is null)
             return NotFound(Result.Fail("User was not found.").AsNotFound());
 
@@ -163,7 +163,7 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("resendEmailConfirmation")]
     public async Task<IActionResult> ResendEmailConfirmation(EmailAddress emailAddress)
     {
-        UserDao user = await _userManager.FindByEmailAsync(emailAddress.Email);
+        UserRecord user = await _userManager.FindByEmailAsync(emailAddress.Email);
         if (user is null || user.EmailConfirmed)
             return Ok(Result.Success("Reset Password email sent. Please check your Mailbox.")); // Fake it.
 
@@ -191,7 +191,7 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("forgotPassword")]
     public async Task<IActionResult> ForgotPassword(EmailAddress emailAddress)
     {
-        UserDao user = await _userManager.FindByEmailAsync(emailAddress.Email);
+        UserRecord user = await _userManager.FindByEmailAsync(emailAddress.Email);
         if (user is null || !await _userManager.IsEmailConfirmedAsync(user))
             return Ok(Result.Success("Verification email sent. Please check your Mailbox.")); // Fake it.
 
@@ -204,7 +204,7 @@ public sealed partial class AuthController : ControllerBase
     [HttpPost("resetPassword")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest resetPasswordRequest)
     {
-        UserDao user = await _userManager.FindByEmailAsync(resetPasswordRequest.Email);
+        UserRecord user = await _userManager.FindByEmailAsync(resetPasswordRequest.Email);
         if (user is null)
             return Ok(Result.Success("Password has been reset.")); // Fake it.
 
@@ -214,7 +214,7 @@ public sealed partial class AuthController : ControllerBase
             : BadRequest(Result.Fail(result.Errors.Select(x => x.Description)).AsBadRequest());
     }
 
-    private async Task GenerateAndSendConfirmationEmail(UserDao user)
+    private async Task GenerateAndSendConfirmationEmail(UserRecord user)
     {
         string code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         string callbackUrl = Url.ActionLink("confirmEmail", "Auth", new { UserId = user.Id, Code = code });
@@ -222,7 +222,7 @@ public sealed partial class AuthController : ControllerBase
         await _emailSender.SendAsync(user.Email, "Confirm Your account", $"Please confirm your account by <a href='{callbackUrl}'>Clicking Here</a>");
     }
 
-    private async Task GenerateAndSendPasswordResetEmail(UserDao user)
+    private async Task GenerateAndSendPasswordResetEmail(UserRecord user)
     {
         string code = await _userManager.GeneratePasswordResetTokenAsync(user);
         string callbackUrl = Url.ActionLink("resetPassword", "Auth", new { Area = "Identity", Code = code });

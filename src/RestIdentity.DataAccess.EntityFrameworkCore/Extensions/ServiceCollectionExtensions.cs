@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
 
     public static IdentityBuilder AddIdentityUserRepository(this IServiceCollection services, Action<IdentityOptions> userSetupAction)
     {
-        return services.AddIdentity<UserDao, IdentityRole>(userSetupAction)
+        return services.AddIdentity<UserRecord, IdentityRole>(userSetupAction)
             .AddEntityFrameworkStores<ApplicationDbContext>();
     }
 }

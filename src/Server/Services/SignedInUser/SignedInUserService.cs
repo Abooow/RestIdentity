@@ -11,13 +11,13 @@ namespace RestIdentity.Server.Services.SignedInUser;
 
 internal sealed class SignedInUserService : ISignedInUserService
 {
-    private readonly UserManager<UserDao> _userManager;
+    private readonly UserManager<UserRecord> _userManager;
     private readonly ICookieService _cookieService;
     private readonly IServiceProvider _serviceProvider;
     private readonly DataProtectionKeys _dataProtectionKeys;
 
     public SignedInUserService(
-        UserManager<UserDao> userManager,
+        UserManager<UserRecord> userManager,
         ICookieService cookieService,
         IServiceProvider serviceProvider,
         IOptions<DataProtectionKeys> dataProtectionKeys)
@@ -46,13 +46,13 @@ internal sealed class SignedInUserService : ISignedInUserService
         return null;
     }
 
-    public async Task<UserDao> GetUserAsync()
+    public async Task<UserRecord> GetUserAsync()
     {
         string userId = GetUserId();
         if (userId is null)
             return null;
 
-        UserDao user = await _userManager.FindByIdAsync(userId);
+        UserRecord user = await _userManager.FindByIdAsync(userId);
         return user;
     }
 }

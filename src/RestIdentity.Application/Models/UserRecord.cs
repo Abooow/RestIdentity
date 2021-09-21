@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace RestIdentity.DataAccess.Models;
 
-public sealed class UserDao : IdentityUser
+public sealed class UserRecord : IdentityUser
 {
     [Required]
     [MaxLength(50)]
@@ -15,5 +15,5 @@ public sealed class UserDao : IdentityUser
 
     public DateTime DateCreated { get; set; }
 
-    public UserAvatarDao UserAvatar { get; set; }
+    public UserAvatarRecord UserAvatar { get; set; }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestIdentity.DataAccess.Models;
 
-public class UserAvatarDao
+public class UserAvatarRecord
 {
     [Key]
     [Required]
@@ -23,15 +23,15 @@ public class UserAvatarDao
     [Required]
     public DateTime LastModifiedDate { get; set; }
 
-    public virtual UserDao User { get; set; }
+    public virtual UserRecord User { get; set; }
 
-    public UserAvatarDao()
+    public UserAvatarRecord()
     {
         LastModifiedDate = DateTime.UtcNow;
         UsesDefaultAvatar = true;
     }
 
-    public UserAvatarDao(UserDao user)
+    public UserAvatarRecord(UserRecord user)
         : this()
     {
         User = user;

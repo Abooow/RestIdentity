@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Models;
 
-public class TokenDao
+public class TokenRecord
 {
     [Key]
     public int Id { get; set; }
@@ -32,5 +32,5 @@ public class TokenDao
     [Required]
     public DateTime DateCreated { get; set; }
 
-    public virtual UserDao User { get; set; }
+    public virtual UserRecord User { get; set; }
 }

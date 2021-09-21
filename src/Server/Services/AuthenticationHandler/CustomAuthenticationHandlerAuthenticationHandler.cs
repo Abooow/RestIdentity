@@ -20,14 +20,14 @@ namespace RestIdentity.Server.Services.AuthenticationHandler;
 
 public class CustomAuthenticationHandler : ICustomAuthenticationHandler
 {
-    private readonly UserManager<UserDao> _userManager;
+    private readonly UserManager<UserRecord> _userManager;
     private readonly ITokensRepository _tokensRepository;
     private readonly IDataProtectionProvider _dataProtectionProvider;
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly JwtSettings _jwtSettings;
 
     public CustomAuthenticationHandler(
-        UserManager<UserDao> userManager,
+        UserManager<UserRecord> userManager,
         ITokensRepository tokensRepository,
         IDataProtectionProvider dataProtectionProvider,
         IOptions<DataProtectionKeys> dataProtectionKeys,
@@ -40,7 +40,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         _jwtSettings = jwtSettings.Value;
     }
 
-    public async Task<AuthenticateResult> HandleAuthenticateAsync(HttpRequest request, string schemeName, string role, Func<UserDao, Task> notInRoleCallback)
+    public async Task<AuthenticateResult> HandleAuthenticateAsync(HttpRequest request, string schemeName, string role, Func<UserRecord, Task> notInRoleCallback)
     {
         if (!request.Cookies.ContainsKey(CookieConstants.AccessToken) || !request.Cookies.ContainsKey(CookieConstants.UserId))
         {
@@ -80,7 +80,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         string decryptedUserId = protector.Unprotect(userIdHeaderValue.Parameter);
         string decryptedToken = protector.Unprotect(authHeaderValue.Parameter);
 
-        TokenDao tokenModel = await _tokensRepository.GetUserTokenAsync(decryptedUserId, request.Cookies[CookieConstants.UserName]);
+        TokenRecord tokenModel = await _tokensRepository.GetUserTokenAsync(decryptedUserId, request.Cookies[CookieConstants.UserName]);
 
         if (tokenModel is null)
             return AuthenticateResult.Fail("You are not Authorized");
@@ -100,7 +100,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         if (request.Cookies[CookieConstants.UserName] != username)
             return AuthenticateResult.Fail("You are not Authorized");
 
-        UserDao user = await _userManager.FindByNameAsync(username);
+        UserRecord user = await _userManager.FindByNameAsync(username);
         if (user is null)
             return AuthenticateResult.Fail("You are not Authorized");
 

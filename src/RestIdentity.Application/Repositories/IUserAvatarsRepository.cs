@@ -5,16 +5,16 @@ namespace RestIdentity.DataAccess.Repositories;
 public interface IUserAvatarsRepository
 {
     string CreateAvatarHashForUser(string userId);
-    string CreateAvatarHashForUser(UserDao user);
+    string CreateAvatarHashForUser(UserRecord user);
 
-    Task<UserAvatarDao?> FindByUserIdAsync(string userId);
-    Task<UserAvatarDao?> FindByUserNameAsync(string userName);
-    Task<UserAvatarDao?> FindByAvatarHashAsync(string avatarHash);
+    Task<UserAvatarRecord?> FindByUserIdAsync(string userId);
+    Task<UserAvatarRecord?> FindByUserNameAsync(string userName);
+    Task<UserAvatarRecord?> FindByAvatarHashAsync(string avatarHash);
 
-    Task<UserAvatarDao> AddUserAvatarAsync(UserDao user);
-    Task<UserAvatarDao> AddOrUpdateUserAvatarAsync(UserDao user);
-    Task<UserAvatarDao?> UpdateUserAvatarAsync(UserDao user);
+    Task<UserAvatarRecord> AddUserAvatarAsync(UserRecord user);
+    Task<UserAvatarRecord> AddOrUpdateUserAvatarAsync(UserRecord user);
+    Task<UserAvatarRecord?> UpdateUserAvatarAsync(UserRecord user);
 
-    Task<UserAvatarDao?> UseDefaultAvatarForUserAsync(string userId);
-    Task<UserAvatarDao?> UseAvatarForUserAsync(string userId, string imageExtension);
+    Task<UserAvatarRecord?> UseDefaultAvatarForUserAsync(string userId);
+    Task<UserAvatarRecord?> UseAvatarForUserAsync(string userId, string imageExtension);
 }

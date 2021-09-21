@@ -4,8 +4,8 @@ namespace RestIdentity.DataAccess.Repositories;
 
 public interface IAuditLogsRepository
 {
-    Task AddAuditLogAsync(AuditLogDao auditLog);
-    Task AddAuditLogsAsync(IEnumerable<AuditLogDao> auditLogs);
-    Task<IEnumerable<AuditLogDao>?> GetAuditLogsAsync(string userId);
-    Task<IEnumerable<AuditLogDao>?> GetPartialAuditLogsAsync(string userId, IEnumerable<string> types);
+    Task AddAuditLogAsync(AuditLogRecord auditLog);
+    Task AddAuditLogsAsync(IEnumerable<AuditLogRecord> auditLogs);
+    Task<IEnumerable<AuditLogRecord>?> GetAuditLogsAsync(string userId);
+    Task<IEnumerable<AuditLogRecord>?> GetPartialAuditLogsAsync(string userId, IEnumerable<string> types);
 }

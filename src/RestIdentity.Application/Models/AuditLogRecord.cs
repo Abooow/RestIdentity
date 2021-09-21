@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Models;
 
-public class AuditLogDao
+public class AuditLogRecord
 {
     [Key]
     public int Id { get; set; }

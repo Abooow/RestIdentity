@@ -8,10 +8,10 @@ namespace RestIdentity.Server.Services.User;
 
 public interface IUserService
 {
-    Task<Result<UserDao>> RegisterUserAsync(RegisterRequest registerRequest);
-    Task<Result<UserDao>> RegisterAdminUserAsync(RegisterRequest registerRequest);
+    Task<Result<UserRecord>> RegisterUserAsync(RegisterRequest registerRequest);
+    Task<Result<UserRecord>> RegisterAdminUserAsync(RegisterRequest registerRequest);
 
-    Task<(bool Success, UserDao User)> CheckLoggedInUserPasswordAsync(string password);
+    Task<(bool Success, UserRecord User)> CheckLoggedInUserPasswordAsync(string password);
 
     Task<PersonalUserProfile> GetLoggedInUserProfileAsync();
     Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId);
@@ -23,5 +23,5 @@ public interface IUserService
     Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest);
 
     string GetSignedInUserId();
-    Task<UserDao> GetSignedInUserAsync();
+    Task<UserRecord> GetSignedInUserAsync();
 }

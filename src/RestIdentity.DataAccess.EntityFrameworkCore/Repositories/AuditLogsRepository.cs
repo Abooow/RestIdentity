@@ -12,7 +12,7 @@ namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 internal class AuditLogsRepository : IAuditLogsRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<UserDao> _userManager;
+    private readonly UserManager<UserRecord> _userManager;
     private readonly ILogger<AuditLogsRepository> _logger;
 
     public AuditLogsRepository(ApplicationDbContext context, IServiceProvider serviceProvider, ILogger<AuditLogsRepository> logger)
@@ -20,13 +20,13 @@ internal class AuditLogsRepository : IAuditLogsRepository
         _context = context;
         _logger = logger;
 
-        _userManager = serviceProvider.GetService<UserManager<UserDao>>()
+        _userManager = serviceProvider.GetService<UserManager<UserRecord>>()
             ?? throw new InvalidOperationException(
                 "Type UserManager<UserDao> has not been registered. " +
                 "Use the AddIdentityUserRepository() method to register the required UserManager, which can be found in the RestIdentity.DataAccess namespace.");
     }
 
-    public async Task AddAuditLogAsync(AuditLogDao auditLog)
+    public async Task AddAuditLogAsync(AuditLogRecord auditLog)
     {
         auditLog.Date = DateTime.UtcNow;
 
@@ -45,7 +45,7 @@ internal class AuditLogsRepository : IAuditLogsRepository
         }
     }
 
-    public async Task AddAuditLogsAsync(IEnumerable<AuditLogDao> auditLogs)
+    public async Task AddAuditLogsAsync(IEnumerable<AuditLogRecord> auditLogs)
     {
         foreach (var auditLog in auditLogs)
         {
@@ -67,13 +67,13 @@ internal class AuditLogsRepository : IAuditLogsRepository
         }
     }
 
-    public async Task<IEnumerable<AuditLogDao>?> GetAuditLogsAsync(string userId)
+    public async Task<IEnumerable<AuditLogRecord>?> GetAuditLogsAsync(string userId)
     {
-        UserDao user = await _userManager.FindByIdAsync(userId);
+        UserRecord user = await _userManager.FindByIdAsync(userId);
         if (user is null)
             return null;
 
-        AuditLogDao[] auditLogs = await _context.AuditLogs
+        AuditLogRecord[] auditLogs = await _context.AuditLogs
             .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.Date)
             .ToArrayAsync();
@@ -81,13 +81,13 @@ internal class AuditLogsRepository : IAuditLogsRepository
         return auditLogs;
     }
 
-    public async Task<IEnumerable<AuditLogDao>?> GetPartialAuditLogsAsync(string userId, IEnumerable<string> types)
+    public async Task<IEnumerable<AuditLogRecord>?> GetPartialAuditLogsAsync(string userId, IEnumerable<string> types)
     {
-        UserDao user = await _userManager.FindByIdAsync(userId);
+        UserRecord user = await _userManager.FindByIdAsync(userId);
         if (user is null)
             return null;
 
-        AuditLogDao[] auditLogs = await _context.AuditLogs
+        AuditLogRecord[] auditLogs = await _context.AuditLogs
             .Where(x => x.UserId == userId && types.Contains(x.Type))
             .OrderByDescending(x => x.Date)
             .ToArrayAsync();

@@ -66,7 +66,7 @@ public sealed class UsersController : ControllerBase
         if (userId is null)
             return BadRequest(Result<IEnumerable<UserAuditLog>>.Fail(""));
 
-        (_, IEnumerable<AuditLogDao> auditLogs) = await _auditLogService.GetPartialAuditLogsAsync(userId);
+        (_, IEnumerable<AuditLogRecord> auditLogs) = await _auditLogService.GetPartialAuditLogsAsync(userId);
 
         return Ok(Result<IEnumerable<UserAuditLog>>.Success(MapAuditLogs(auditLogs)));
     }
@@ -75,7 +75,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("auditLogs/{id}")]
     public async Task<IActionResult> GetUserAuditLog(string id)
     {
-        (bool userFound, IEnumerable<AuditLogDao> auditLogs) = await _auditLogService.GetFullAuditLogsAsync(id);
+        (bool userFound, IEnumerable<AuditLogRecord> auditLogs) = await _auditLogService.GetFullAuditLogsAsync(id);
 
         return userFound
             ? Ok(Result<IEnumerable<UserAuditLog>>.Success(MapAuditLogs(auditLogs)))
@@ -93,9 +93,9 @@ public sealed class UsersController : ControllerBase
             : BadRequest(Result.Fail(updateProfileResult.Errors.Select(x => x.Description)));
     }
 
-    private static IEnumerable<UserAuditLog> MapAuditLogs(IEnumerable<AuditLogDao> auditLogs)
+    private static IEnumerable<UserAuditLog> MapAuditLogs(IEnumerable<AuditLogRecord> auditLogs)
     {
-        foreach (AuditLogDao auditLog in auditLogs)
+        foreach (AuditLogRecord auditLog in auditLogs)
         {
             yield return new UserAuditLog(auditLog.Type, auditLog.IpAddress, auditLog.Date);
         }

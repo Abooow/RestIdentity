@@ -21,7 +21,7 @@ namespace RestIdentity.Server.Services.Authentication;
 
 public sealed class AuthService : IAuthService
 {
-    private readonly UserManager<UserDao> _userManager;
+    private readonly UserManager<UserRecord> _userManager;
     private readonly ITokensRepository _tokensRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly IdentityDefaultOptions _identityOptions;
@@ -30,7 +30,7 @@ public sealed class AuthService : IAuthService
     private readonly IServiceProvider _provider;
 
     public AuthService(
-        UserManager<UserDao> userManager,
+        UserManager<UserRecord> userManager,
         ITokensRepository tokensRepository,
         IAuditLogService auditLogService,
         IOptions<IdentityDefaultOptions> identityOptions,
@@ -50,7 +50,7 @@ public sealed class AuthService : IAuthService
     public async Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest)
     {
         // Find User.
-        UserDao user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        UserRecord user = await _userManager.FindByEmailAsync(loginRequest.Email);
         if (user is null)
         {
             Log.Error("Could Not find User {Email}", loginRequest.Email);
@@ -92,7 +92,7 @@ public sealed class AuthService : IAuthService
         return Result<TokenResponse>.Fail("Request Not Supported.").AsUnauthorized();
     }
 
-    private async Task<TokenResponse> CreateAuthTokenAsync(UserDao user)
+    private async Task<TokenResponse> CreateAuthTokenAsync(UserRecord user)
     {
         SymmetricSecurityKey key = new(Encoding.ASCII.GetBytes(_jwtSettings.Secret));
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
@@ -124,7 +124,7 @@ public sealed class AuthService : IAuthService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         string encryptedToken = protectorJwt.Protect(tokenHandler.WriteToken(token));
 
-        var refreshToken = new TokenDao()
+        var refreshToken = new TokenRecord()
         {
             ClientId = _jwtSettings.ClientId,
             UserId = user.Id,

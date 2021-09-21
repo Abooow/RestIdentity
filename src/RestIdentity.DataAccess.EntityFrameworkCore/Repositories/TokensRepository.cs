@@ -16,7 +16,7 @@ internal class TokensRepository : ITokensRepository
         _haveRemovedUserTokens = new Dictionary<string, bool>();
     }
 
-    public async Task AddUserTokenAsync(TokenDao token)
+    public async Task AddUserTokenAsync(TokenRecord token)
     {
         if (!TokensHasBeenRemovedForUser(token.UserId))
             await RemoveTokensAsync(token.UserId);
@@ -27,12 +27,12 @@ internal class TokensRepository : ITokensRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public Task<TokenDao?> GetUserTokenAsync(string userId)
+    public Task<TokenRecord?> GetUserTokenAsync(string userId)
     {
         return _dbContext.Tokens.Where(x => x.UserId == userId).FirstOrDefaultAsync()!;
     }
 
-    public Task<TokenDao?> GetUserTokenAsync(string userId, string userName)
+    public Task<TokenRecord?> GetUserTokenAsync(string userId, string userName)
     {
         userName = userName.ToUpperInvariant();
 
@@ -46,7 +46,7 @@ internal class TokensRepository : ITokensRepository
         if (TokensHasBeenRemovedForUser(userId))
             return false;
 
-        IEnumerable<TokenDao> userTokensToRemove = await RemoveTokensAsync(userId);
+        IEnumerable<TokenRecord> userTokensToRemove = await RemoveTokensAsync(userId);
         await _dbContext.SaveChangesAsync();
 
         return userTokensToRemove.Any();
@@ -57,9 +57,9 @@ internal class TokensRepository : ITokensRepository
         return _dbContext.Tokens.Where(x => x.UserId == userId).AnyAsync();
     }
 
-    private async Task<IEnumerable<TokenDao>> RemoveTokensAsync(string userId)
+    private async Task<IEnumerable<TokenRecord>> RemoveTokensAsync(string userId)
     {
-        TokenDao[] userTokensToRemove = await _dbContext.Tokens.Where(x => x.UserId == userId).ToArrayAsync();
+        TokenRecord[] userTokensToRemove = await _dbContext.Tokens.Where(x => x.UserId == userId).ToArrayAsync();
         _dbContext.Tokens.RemoveRange(userTokensToRemove);
 
         SetUserTokensRemoved(userId, true);

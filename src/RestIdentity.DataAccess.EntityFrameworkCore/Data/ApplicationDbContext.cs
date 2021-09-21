@@ -5,11 +5,11 @@ using RestIdentity.DataAccess.Models;
 
 namespace RestIdentity.DataAccess.Data;
 
-internal sealed class ApplicationDbContext : IdentityDbContext<UserDao>
+internal sealed class ApplicationDbContext : IdentityDbContext<UserRecord>
 {
-    public DbSet<TokenDao> Tokens { get; set; }
-    public DbSet<AuditLogDao> AuditLogs { get; set; }
-    public DbSet<UserAvatarDao> UserAvatars { get; set; }
+    public DbSet<TokenRecord> Tokens { get; set; }
+    public DbSet<AuditLogRecord> AuditLogs { get; set; }
+    public DbSet<UserAvatarRecord> UserAvatars { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -20,10 +20,10 @@ internal sealed class ApplicationDbContext : IdentityDbContext<UserDao>
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<AuditLogDao>()
+        builder.Entity<AuditLogRecord>()
             .HasIndex(b => b.UserId);
 
-        builder.Entity<UserDao>(entity =>
+        builder.Entity<UserRecord>(entity =>
         {
             entity.ToTable(name: "Users", "Identity");
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
