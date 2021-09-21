@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{F632D68E-B416-4677-8DB1-AAE7B261C418}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestIdentity.DataAccess", "src\RestIdentity.Application\RestIdentity.DataAccess.csproj", "{725E2CC2-1BD7-4212-BB05-DFAD0EA47703}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestIdentity.DataAccess", "src\RestIdentity.DataAccess\RestIdentity.DataAccess.csproj", "{725E2CC2-1BD7-4212-BB05-DFAD0EA47703}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DataAccess", "DataAccess", "{246A0A0A-A417-4965-A305-2CE87EB32DC6}"
 EndProject
