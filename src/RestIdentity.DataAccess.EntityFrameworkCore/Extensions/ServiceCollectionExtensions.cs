@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IUserAvatarRepository, UserAvatarRepository>();
         services.AddTransient<IAuditLogRepository, AuditLogRepository>();
         services.AddTransient<ITokenRepository, TokenRepository>();
+        services.AddTransient<IRoleRepository, RoleRepository>();
 
         return services;
     }
