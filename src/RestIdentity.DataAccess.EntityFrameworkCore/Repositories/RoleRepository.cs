@@ -46,4 +46,10 @@ internal sealed class RoleRepository : IRoleRepository
         _applicationDbContext.Roles.Add(role);
         await _applicationDbContext.SaveChangesAsync();
     }
+
+    public async Task AddRolesAsync(IEnumerable<IdentityRole> roles)
+    {
+        _applicationDbContext.Roles.AddRange(roles);
+        await _applicationDbContext.SaveChangesAsync();
+    }
 }

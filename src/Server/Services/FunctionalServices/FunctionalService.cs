@@ -47,8 +47,7 @@ public sealed class FunctionalService : IFunctionalService
         var adminRole = new IdentityRole() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized };
         var customerRole = new IdentityRole() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized };
 
-        await _roleRepository.AddRoleAsync(adminRole);
-        await _roleRepository.AddRoleAsync(customerRole);
+        await _roleRepository.AddRolesAsync(adminRole, customerRole);
     }
 
     public Task CreateDefaultAdminUserAsync()

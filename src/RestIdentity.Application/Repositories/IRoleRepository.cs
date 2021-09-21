@@ -10,4 +10,5 @@ public interface IRoleRepository
     Task<IdentityRole?> GetRoleAsync(string role);
     ValueTask<IdentityRole?> GetRoleWithIdAsync(string roleId);
     Task AddRoleAsync(IdentityRole role);
+    Task AddRolesAsync(IEnumerable<IdentityRole> roles);
 }

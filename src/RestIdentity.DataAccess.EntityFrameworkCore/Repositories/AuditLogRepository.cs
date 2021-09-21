@@ -45,6 +45,28 @@ internal class AuditLogRepository : IAuditLogRepository
         }
     }
 
+    public async Task AddAuditLogsAsync(IEnumerable<AuditLogDao> auditLogs)
+    {
+        foreach (var auditLog in auditLogs)
+        {
+            auditLog.Date = DateTime.UtcNow;
+        }
+
+        await using IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            _context.AuditLogs.AddRange(auditLogs);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred while committing multiple Audit Logs.");
+        }
+    }
+
     public async Task<IEnumerable<AuditLogDao>?> GetAuditLogsAsync(string userId)
     {
         UserDao user = await _userManager.FindByIdAsync(userId);
