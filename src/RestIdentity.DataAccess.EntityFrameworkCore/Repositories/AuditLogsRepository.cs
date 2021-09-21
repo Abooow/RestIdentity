@@ -9,13 +9,13 @@ using RestIdentity.DataAccess.Repositories;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
-internal class AuditLogRepository : IAuditLogRepository
+internal class AuditLogsRepository : IAuditLogsRepository
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<UserDao> _userManager;
-    private readonly ILogger<AuditLogRepository> _logger;
+    private readonly ILogger<AuditLogsRepository> _logger;
 
-    public AuditLogRepository(ApplicationDbContext context, IServiceProvider serviceProvider, ILogger<AuditLogRepository> logger)
+    public AuditLogsRepository(ApplicationDbContext context, IServiceProvider serviceProvider, ILogger<AuditLogsRepository> logger)
     {
         _context = context;
         _logger = logger;

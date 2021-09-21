@@ -21,20 +21,20 @@ namespace RestIdentity.Server.Services.AuthenticationHandler;
 public class CustomAuthenticationHandler : ICustomAuthenticationHandler
 {
     private readonly UserManager<UserDao> _userManager;
-    private readonly ITokenRepository _tokenRepository;
+    private readonly ITokensRepository _tokensRepository;
     private readonly IDataProtectionProvider _dataProtectionProvider;
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly JwtSettings _jwtSettings;
 
     public CustomAuthenticationHandler(
         UserManager<UserDao> userManager,
-        ITokenRepository tokenRepository,
+        ITokensRepository tokensRepository,
         IDataProtectionProvider dataProtectionProvider,
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IOptions<JwtSettings> jwtSettings)
     {
         _userManager = userManager;
-        _tokenRepository = tokenRepository;
+        _tokensRepository = tokensRepository;
         _dataProtectionProvider = dataProtectionProvider;
         _dataProtectionKeys = dataProtectionKeys.Value;
         _jwtSettings = jwtSettings.Value;
@@ -80,7 +80,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         string decryptedUserId = protector.Unprotect(userIdHeaderValue.Parameter);
         string decryptedToken = protector.Unprotect(authHeaderValue.Parameter);
 
-        TokenDao tokenModel = await _tokenRepository.GetUserTokenAsync(decryptedUserId, request.Cookies[CookieConstants.UserName]);
+        TokenDao tokenModel = await _tokensRepository.GetUserTokenAsync(decryptedUserId, request.Cookies[CookieConstants.UserName]);
 
         if (tokenModel is null)
             return AuthenticateResult.Fail("You are not Authorized");

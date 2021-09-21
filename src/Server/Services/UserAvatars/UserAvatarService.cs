@@ -22,7 +22,7 @@ namespace RestIdentity.Server.Services.UserAvatars;
 internal sealed class UserAvatarService : IUserAvatarService
 {
     private readonly ISignedInUserService _signedInUserService;
-    private readonly IUserAvatarRepository _userAvatarRepository;
+    private readonly IUserAvatarsRepository _userAvatarsRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly UserAvatarDefaultOptions _userAvatarOptions;
@@ -30,14 +30,14 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public UserAvatarService(
         ISignedInUserService signedInUserService,
-        IUserAvatarRepository userAvatarRepository,
+        IUserAvatarsRepository userAvatarsRepository,
         IAuditLogService auditLogService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<UserAvatarDefaultOptions> userAvatarOptions,
         UserAvatarChannel userAvatarChannel)
     {
         _signedInUserService = signedInUserService;
-        _userAvatarRepository = userAvatarRepository;
+        _userAvatarsRepository = userAvatarsRepository;
         _auditLogService = auditLogService;
         _fileStorageOptions = fileStorageOptions.Value;
         _userAvatarOptions = userAvatarOptions.Value;
@@ -46,22 +46,22 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public Task<UserAvatarDao> FindByUserIdAsync(string userId)
     {
-        return _userAvatarRepository.FindByUserIdAsync(userId);
+        return _userAvatarsRepository.FindByUserIdAsync(userId);
     }
 
     public Task<UserAvatarDao> FindByUserNameAsync(string userName)
     {
-        return _userAvatarRepository.FindByUserNameAsync(userName);
+        return _userAvatarsRepository.FindByUserNameAsync(userName);
     }
 
     public Task<UserAvatarDao> FindByAvatarHashAsync(string avatarHash)
     {
-        return _userAvatarRepository.FindByAvatarHashAsync(avatarHash);
+        return _userAvatarsRepository.FindByAvatarHashAsync(avatarHash);
     }
 
     public async Task CreateDefaultAvatarAsync(UserDao user)
     {
-        UserAvatarDao userAvatar = await _userAvatarRepository.AddOrUpdateUserAvatarAsync(user);
+        UserAvatarDao userAvatar = await _userAvatarsRepository.AddOrUpdateUserAvatarAsync(user);
 
         CreateDefaultUserAvatar(user, userAvatar.AvatarHash);
     }
@@ -137,7 +137,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task CreateFromChannelAsync(UserAvatarChannelModel userAvatarChannelModel)
     {
-        string avatarHash = _userAvatarRepository.CreateAvatarHashForUser(userAvatarChannelModel.UserId);
+        string avatarHash = _userAvatarsRepository.CreateAvatarHashForUser(userAvatarChannelModel.UserId);
         string savePath = @$"{_fileStorageOptions.UserAvatarsPath}\{avatarHash}";
         EnsureDirectoryCreated(savePath);
 
@@ -218,7 +218,7 @@ internal sealed class UserAvatarService : IUserAvatarService
             resizedImage.Save($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.png", ImageFormat.Png);
         }
 
-        await _userAvatarRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "png");
+        await _userAvatarsRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "png");
     }
 
     private async Task CreateGifsAsync(UserAvatarChannelModel userAvatarChannelModel, Size originalSize, string savePath)
@@ -232,12 +232,12 @@ internal sealed class UserAvatarService : IUserAvatarService
             await resizedGif.WriteAsync($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.gif", MagickFormat.Gif);
         }
 
-        await _userAvatarRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "gif");
+        await _userAvatarsRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "gif");
     }
 
     private async Task<UserAvatarDao> RemoveUserAvatarAsync(string userId)
     {
-        UserAvatarDao userAvatar = await _userAvatarRepository.UseDefaultAvatarForUserAsync(userId);
+        UserAvatarDao userAvatar = await _userAvatarsRepository.UseDefaultAvatarForUserAsync(userId);
         if (userAvatar is null)
             return null;
 

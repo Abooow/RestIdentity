@@ -28,7 +28,7 @@ public sealed partial class AuthController : ControllerBase
     private readonly UserManager<UserDao> _userManager;
     private readonly SignInManager<UserDao> _signInManager;
     private readonly UrlEncoder _urlEncoder;
-    private readonly ITokenRepository _tokenRepository;
+    private readonly ITokensRepository _tokensRepository;
     private readonly IEmailSender _emailSender;
     private readonly IAuditLogService _auditLogService;
     private readonly IAuthService _authService;
@@ -41,7 +41,7 @@ public sealed partial class AuthController : ControllerBase
         UserManager<UserDao> userManager,
         SignInManager<UserDao> signInManager,
         UrlEncoder urlEncoder,
-        ITokenRepository tokenRepository,
+        ITokensRepository tokensRepository,
         IEmailSender emailSender,
         IAuditLogService auditLogService,
         IAuthService authService,
@@ -51,7 +51,7 @@ public sealed partial class AuthController : ControllerBase
         _userManager = userManager;
         _signInManager = signInManager;
         _urlEncoder = urlEncoder;
-        _tokenRepository = tokenRepository;
+        _tokensRepository = tokensRepository;
         _emailSender = emailSender;
         _auditLogService = auditLogService;
         _authService = authService;
@@ -124,10 +124,10 @@ public sealed partial class AuthController : ControllerBase
 
         string userId = _userService.GetSignedInUserId();
 
-        TokenDao token = await _tokenRepository.GetUserTokenAsync(userId);
+        TokenDao token = await _tokensRepository.GetUserTokenAsync(userId);
         if (token is not null)
         {
-            await _tokenRepository.RemoveAllUserTokensAsync(userId);
+            await _tokensRepository.RemoveAllUserTokensAsync(userId);
 
             await _auditLogService.AddAuditLogAsync(userId, AuditLogsConstants.AuthSignedOut);
             // No need to call SaveChangesAsync, AddAuditLogAsync will do that.

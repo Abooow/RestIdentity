@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Repositories;
 
-public interface IAuditLogRepository
+public interface IAuditLogsRepository
 {
     Task AddAuditLogAsync(AuditLogDao auditLog);
     Task AddAuditLogsAsync(IEnumerable<AuditLogDao> auditLogs);

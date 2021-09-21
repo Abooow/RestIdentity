@@ -4,8 +4,8 @@ namespace RestIdentity.DataAccess.Repositories;
 
 public static class RolesRepositoryExtensions
 {
-    public static Task AddRolesAsync(this IRoleRepository roleRepository, params IdentityRole[] roles)
+    public static Task AddRolesAsync(this IRolesRepository rolesRepository, params IdentityRole[] roles)
     {
-        return roleRepository.AddRolesAsync(roles);
+        return rolesRepository.AddRolesAsync(roles);
     }
 }

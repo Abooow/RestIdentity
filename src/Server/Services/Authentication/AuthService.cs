@@ -22,7 +22,7 @@ namespace RestIdentity.Server.Services.Authentication;
 public sealed class AuthService : IAuthService
 {
     private readonly UserManager<UserDao> _userManager;
-    private readonly ITokenRepository _tokenRepository;
+    private readonly ITokensRepository _tokensRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly IdentityDefaultOptions _identityOptions;
     private readonly JwtSettings _jwtSettings;
@@ -31,7 +31,7 @@ public sealed class AuthService : IAuthService
 
     public AuthService(
         UserManager<UserDao> userManager,
-        ITokenRepository tokenRepository,
+        ITokensRepository tokensRepository,
         IAuditLogService auditLogService,
         IOptions<IdentityDefaultOptions> identityOptions,
         IOptions<JwtSettings> jwtSettings,
@@ -39,7 +39,7 @@ public sealed class AuthService : IAuthService
         IServiceProvider provider)
     {
         _userManager = userManager;
-        _tokenRepository = tokenRepository;
+        _tokensRepository = tokensRepository;
         _identityOptions = identityOptions.Value;
         _jwtSettings = jwtSettings.Value;
         _auditLogService = auditLogService;
@@ -137,7 +137,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            await _tokenRepository.AddUserTokenAsync(refreshToken);
+            await _tokensRepository.AddUserTokenAsync(refreshToken);
         }
         catch (Exception e)
         {

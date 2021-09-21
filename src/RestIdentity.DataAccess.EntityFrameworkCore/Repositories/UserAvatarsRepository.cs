@@ -7,11 +7,11 @@ using RestIdentity.DataAccess.Repositories;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
-internal class UserAvatarRepository : IUserAvatarRepository
+internal class UserAvatarsRepository : IUserAvatarsRepository
 {
     private readonly ApplicationDbContext _dbContext;
 
-    public UserAvatarRepository(ApplicationDbContext dbContext)
+    public UserAvatarsRepository(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
     }

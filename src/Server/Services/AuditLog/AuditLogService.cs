@@ -9,16 +9,16 @@ namespace RestIdentity.Server.Services.AuditLog;
 
 public sealed class AuditLogService : IAuditLogService
 {
-    private readonly IAuditLogRepository _auditLogRepository;
+    private readonly IAuditLogsRepository _auditLogsRepository;
     private readonly ISignedInUserService _signedInUserService;
     private readonly ICookieService _cookieService;
 
     public AuditLogService(
-        IAuditLogRepository auditLogRepository,
+        IAuditLogsRepository auditLogsRepository,
         ISignedInUserService signedInUserService,
         ICookieService cookieService)
     {
-        _auditLogRepository = auditLogRepository;
+        _auditLogsRepository = auditLogsRepository;
         _signedInUserService = signedInUserService;
         _cookieService = cookieService;
     }
@@ -56,19 +56,19 @@ public sealed class AuditLogService : IAuditLogService
             OperatingSystem = _cookieService.GetRemoteOperatingSystem(),
         };
 
-        return _auditLogRepository.AddAuditLogAsync(auditLog);
+        return _auditLogsRepository.AddAuditLogAsync(auditLog);
     }
 
     public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetPartialAuditLogsAsync(string userId)
     {
-        IEnumerable<AuditLogDao> auditLogs = await _auditLogRepository.GetPartialAuditLogsAsync(userId, AuditLogsConstants.PartialAuditLogTypes);
+        IEnumerable<AuditLogDao> auditLogs = await _auditLogsRepository.GetPartialAuditLogsAsync(userId, AuditLogsConstants.PartialAuditLogTypes);
 
         return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
     }
 
     public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetFullAuditLogsAsync(string userId)
     {
-        IEnumerable<AuditLogDao> auditLogs = await _auditLogRepository.GetAuditLogsAsync(userId);
+        IEnumerable<AuditLogDao> auditLogs = await _auditLogsRepository.GetAuditLogsAsync(userId);
 
         return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
     }

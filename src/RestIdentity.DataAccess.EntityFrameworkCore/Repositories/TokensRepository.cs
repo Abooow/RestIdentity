@@ -5,12 +5,12 @@ using RestIdentity.DataAccess.Repositories;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
-internal class TokenRepository : ITokenRepository
+internal class TokensRepository : ITokensRepository
 {
     private readonly ApplicationDbContext _dbContext;
     private Dictionary<string, bool> _haveRemovedUserTokens;
 
-    public TokenRepository(ApplicationDbContext dbContext)
+    public TokensRepository(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
         _haveRemovedUserTokens = new Dictionary<string, bool>();

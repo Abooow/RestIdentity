@@ -4,8 +4,8 @@ namespace RestIdentity.DataAccess.Repositories;
 
 public static class AuditLogRepositoryExtensions
 {
-    public static Task AddRolesAsync(this IAuditLogRepository auditLogRepository, params AuditLogDao[] auditLogs)
+    public static Task AddRolesAsync(this IAuditLogsRepository auditLogsRepository, params AuditLogDao[] auditLogs)
     {
-        return auditLogRepository.AddAuditLogsAsync(auditLogs);
+        return auditLogsRepository.AddAuditLogsAsync(auditLogs);
     }
 }

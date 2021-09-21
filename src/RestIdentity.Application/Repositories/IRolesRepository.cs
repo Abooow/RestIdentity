@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Repositories;
 
-public interface IRoleRepository
+public interface IRolesRepository
 {
     Task<bool> AnyRolesExistsAsync();
     Task<bool> RoleExistsAsync(string role);

@@ -5,11 +5,11 @@ using RestIdentity.DataAccess.Repositories;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
-internal sealed class RoleRepository : IRoleRepository
+internal sealed class RolesRepository : IRolesRepository
 {
     private readonly ApplicationDbContext _applicationDbContext;
 
-    public RoleRepository(ApplicationDbContext applicationDbContext)
+    public RolesRepository(ApplicationDbContext applicationDbContext)
     {
         _applicationDbContext = applicationDbContext;
     }

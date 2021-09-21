@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Repositories;
 
-public interface IUserAvatarRepository
+public interface IUserAvatarsRepository
 {
     string CreateAvatarHashForUser(string userId);
     string CreateAvatarHashForUser(UserDao user);

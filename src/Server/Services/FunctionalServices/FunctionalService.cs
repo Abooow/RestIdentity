@@ -13,20 +13,20 @@ namespace RestIdentity.Server.Services.FunctionalServices;
 public sealed class FunctionalService : IFunctionalService
 {
     private readonly UserManager<UserDao> _userManager;
-    private readonly IRoleRepository _roleRepository;
+    private readonly IRolesRepository _rolesRepository;
     private readonly IUserAvatarService _userAvatarService;
     private readonly AdminUserOptions _adminUserOptions;
     private readonly CustomerUserOptions _customerUserOptions;
 
     public FunctionalService(
         UserManager<UserDao> userManager,
-        IRoleRepository roleRepository,
+        IRolesRepository rolesRepository,
         IUserAvatarService userAvatarService,
         IOptions<AdminUserOptions> adminUserOptions,
         IOptions<CustomerUserOptions> customerUserOptions)
     {
         _userManager = userManager;
-        _roleRepository = roleRepository;
+        _rolesRepository = rolesRepository;
         _userAvatarService = userAvatarService;
         _adminUserOptions = adminUserOptions.Value;
         _customerUserOptions = customerUserOptions.Value;
@@ -34,7 +34,7 @@ public sealed class FunctionalService : IFunctionalService
 
     public Task<bool> AnyRolesExistsAsync()
     {
-        return _roleRepository.AnyRolesExistsAsync();
+        return _rolesRepository.AnyRolesExistsAsync();
     }
 
     public Task<bool> AnyUsersExistsAsync()
@@ -47,7 +47,7 @@ public sealed class FunctionalService : IFunctionalService
         var adminRole = new IdentityRole() { Id = RolesConstants.AdminId, Name = RolesConstants.Admin, NormalizedName = RolesConstants.AdminNormalized };
         var customerRole = new IdentityRole() { Id = RolesConstants.CustomerId, Name = RolesConstants.Customer, NormalizedName = RolesConstants.CustomerNormalized };
 
-        await _roleRepository.AddRolesAsync(adminRole, customerRole);
+        await _rolesRepository.AddRolesAsync(adminRole, customerRole);
     }
 
     public Task CreateDefaultAdminUserAsync()

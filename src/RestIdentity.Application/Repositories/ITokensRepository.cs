@@ -2,7 +2,7 @@
 
 namespace RestIdentity.DataAccess.Repositories;
 
-public interface ITokenRepository
+public interface ITokensRepository
 {
     /// <summary>
     /// Will add a Token for a user. If the user has any other tokens they will be removed.
