@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.WritableSettings;
+using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server.Extensions;
 

@@ -3,7 +3,7 @@ using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Shared.Wrapper;
 
-namespace RestIdentity.Server.Services.UserAvatars;
+namespace RestIdentity.Server.Services;
 
 public interface IUserAvatarService
 {

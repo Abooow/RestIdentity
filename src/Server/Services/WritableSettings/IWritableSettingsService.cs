@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 
-namespace RestIdentity.Server.Services.WritableSettings;
+namespace RestIdentity.Server.Services;
 
 internal interface IWritableSettingsService<out T> : IOptionsSnapshot<T> where T : class
 {

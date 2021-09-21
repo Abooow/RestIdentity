@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.DataAccess;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Services.AuthenticationHandler;
+using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server.Extensions;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestIdentity.DataAccess;
 using RestIdentity.Server.Models.Channels;
-using RestIdentity.Server.Services.UserAvatars;
+using RestIdentity.Server.Services;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 

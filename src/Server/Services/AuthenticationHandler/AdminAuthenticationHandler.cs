@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using RestIdentity.DataAccess;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Services.AuditLog;
 using Serilog;
 
-namespace RestIdentity.Server.Services.AuthenticationHandler;
+namespace RestIdentity.Server.Services;
 
 public sealed class AdminAuthenticationOptions : AuthenticationSchemeOptions { }
 

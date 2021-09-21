@@ -1,4 +1,4 @@
-﻿namespace RestIdentity.Server.Services.Cookies;
+﻿namespace RestIdentity.Server.Services;
 
 public interface ICookieService
 {

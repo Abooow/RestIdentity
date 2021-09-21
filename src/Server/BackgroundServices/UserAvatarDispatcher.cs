@@ -1,6 +1,6 @@
 ﻿using RestIdentity.Server.BackgroundServices.Channels;
 using RestIdentity.Server.Models.Channels;
-using RestIdentity.Server.Services.UserAvatars;
+using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server.BackgroundServices;
 

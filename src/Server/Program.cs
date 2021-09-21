@@ -2,7 +2,7 @@
 using RestIdentity.DataAccess;
 using RestIdentity.Logging;
 using RestIdentity.Server.Data;
-using RestIdentity.Server.Services.FunctionalServices;
+using RestIdentity.Server.Services;
 using Serilog;
 
 namespace RestIdentity.Server;

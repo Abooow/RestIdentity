@@ -5,10 +5,9 @@ using RestIdentity.DataAccess;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Services.UserAvatars;
 using Serilog;
 
-namespace RestIdentity.Server.Services.FunctionalServices;
+namespace RestIdentity.Server.Services;
 
 public sealed class FunctionalService : IFunctionalService
 {

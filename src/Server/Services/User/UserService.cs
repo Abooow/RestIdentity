@@ -8,15 +8,12 @@ using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Services.AuditLog;
-using RestIdentity.Server.Services.SignedInUser;
-using RestIdentity.Server.Services.UserAvatars;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 
-namespace RestIdentity.Server.Services.User;
+namespace RestIdentity.Server.Services;
 
 internal sealed class UserService : IUserService
 {

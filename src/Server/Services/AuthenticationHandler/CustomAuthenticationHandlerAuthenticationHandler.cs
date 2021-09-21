@@ -16,7 +16,7 @@ using RestIdentity.Server.Models;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 
-namespace RestIdentity.Server.Services.AuthenticationHandler;
+namespace RestIdentity.Server.Services;
 
 public class CustomAuthenticationHandler : ICustomAuthenticationHandler
 {

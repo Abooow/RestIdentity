@@ -2,7 +2,7 @@
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 
-namespace RestIdentity.Server.Services.Authentication;
+namespace RestIdentity.Server.Services;
 
 public interface IAuthService
 {

@@ -1,4 +1,4 @@
-﻿namespace RestIdentity.Server.Services.FunctionalServices;
+﻿namespace RestIdentity.Server.Services;
 
 public interface IFunctionalService
 {

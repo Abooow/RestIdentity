@@ -1,11 +1,9 @@
 ﻿using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Services.Cookies;
-using RestIdentity.Server.Services.SignedInUser;
 using Serilog;
 
-namespace RestIdentity.Server.Services.AuditLog;
+namespace RestIdentity.Server.Services;
 
 public sealed class AuditLogService : IAuditLogService
 {

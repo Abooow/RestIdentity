@@ -10,11 +10,9 @@ using RestIdentity.Server.BackgroundServices.Channels;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.AuditLog;
-using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Shared.Wrapper;
 
-namespace RestIdentity.Server.Services.UserAvatars;
+namespace RestIdentity.Server.Services;
 
 internal sealed class UserAvatarService : IUserAvatarService
 {

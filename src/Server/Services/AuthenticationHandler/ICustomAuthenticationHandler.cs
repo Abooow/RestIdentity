@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using RestIdentity.DataAccess.Models;
 
-namespace RestIdentity.Server.Services.AuthenticationHandler;
+namespace RestIdentity.Server.Services;
 
 public interface ICustomAuthenticationHandler
 {

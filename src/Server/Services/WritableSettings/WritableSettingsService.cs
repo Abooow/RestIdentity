@@ -1,12 +1,10 @@
-﻿using System;
-using System.Text.Json;
-using Microsoft.Extensions.FileProviders;
+﻿using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
-namespace RestIdentity.Server.Services.WritableSettings;
+namespace RestIdentity.Server.Services;
 
 internal sealed class WritableSettingsService<T> : IWritableSettingsService<T> where T : class, new()
 {

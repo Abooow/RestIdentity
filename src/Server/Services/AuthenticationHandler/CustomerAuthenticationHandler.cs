@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestIdentity.DataAccess;
 using Serilog;
 
-namespace RestIdentity.Server.Services.AuthenticationHandler;
+namespace RestIdentity.Server.Services;
 
 public sealed class CustomerAuthenticationOptions : AuthenticationSchemeOptions { }
 

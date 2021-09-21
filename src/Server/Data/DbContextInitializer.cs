@@ -1,5 +1,5 @@
 ﻿using RestIdentity.DataAccess;
-using RestIdentity.Server.Services.FunctionalServices;
+using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server.Data;
 

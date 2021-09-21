@@ -4,10 +4,9 @@ using Microsoft.Extensions.Options;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Services.Cookies;
 using Serilog;
 
-namespace RestIdentity.Server.Services.SignedInUser;
+namespace RestIdentity.Server.Services;
 
 internal sealed class SignedInUserService : ISignedInUserService
 {

@@ -11,13 +11,12 @@ using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 
-namespace RestIdentity.Server.Services.Authentication;
+namespace RestIdentity.Server.Services;
 
 public sealed class AuthService : IAuthService
 {

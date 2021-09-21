@@ -4,13 +4,7 @@ using RestIdentity.DataAccess;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Options;
-using RestIdentity.Server.Services.AuditLog;
-using RestIdentity.Server.Services.Authentication;
-using RestIdentity.Server.Services.Cookies;
-using RestIdentity.Server.Services.EmailSenders;
-using RestIdentity.Server.Services.FunctionalServices;
-using RestIdentity.Server.Services.SignedInUser;
-using RestIdentity.Server.Services.User;
+using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server;
 

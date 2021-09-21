@@ -1,4 +1,4 @@
-﻿namespace RestIdentity.Server.Services.EmailSenders;
+﻿namespace RestIdentity.Server.Services;
 
 public interface IEmailSender
 {

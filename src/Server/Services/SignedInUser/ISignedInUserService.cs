@@ -1,6 +1,6 @@
 ﻿using RestIdentity.DataAccess.Models;
 
-namespace RestIdentity.Server.Services.SignedInUser;
+namespace RestIdentity.Server.Services;
 
 public interface ISignedInUserService
 {

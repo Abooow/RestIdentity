@@ -4,7 +4,7 @@ using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Wrapper;
 
-namespace RestIdentity.Server.Services.User;
+namespace RestIdentity.Server.Services;
 
 public interface IUserService
 {
