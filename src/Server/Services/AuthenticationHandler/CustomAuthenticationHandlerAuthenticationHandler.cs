@@ -7,13 +7,12 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RestIdentity.DataAccess.Models;
+using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Shared.Wrapper;
 using Serilog;
 
@@ -21,27 +20,27 @@ namespace RestIdentity.Server.Services.AuthenticationHandler;
 
 public class CustomAuthenticationHandler : ICustomAuthenticationHandler
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ApplicationDbContext _dbContext;
+    private readonly UserManager<UserDao> _userManager;
+    private readonly ITokenRepository _tokenRepository;
     private readonly IDataProtectionProvider _dataProtectionProvider;
     private readonly DataProtectionKeys _dataProtectionKeys;
     private readonly JwtSettings _jwtSettings;
 
     public CustomAuthenticationHandler(
-        UserManager<ApplicationUser> userManager,
-        ApplicationDbContext dbContext,
+        UserManager<UserDao> userManager,
+        ITokenRepository tokenRepository,
         IDataProtectionProvider dataProtectionProvider,
         IOptions<DataProtectionKeys> dataProtectionKeys,
         IOptions<JwtSettings> jwtSettings)
     {
         _userManager = userManager;
-        _dbContext = dbContext;
+        _tokenRepository = tokenRepository;
         _dataProtectionProvider = dataProtectionProvider;
         _dataProtectionKeys = dataProtectionKeys.Value;
         _jwtSettings = jwtSettings.Value;
     }
 
-    public async Task<AuthenticateResult> HandleAuthenticateAsync(HttpRequest request, string schemeName, string role, Func<ApplicationUser, Task> notInRoleCallback)
+    public async Task<AuthenticateResult> HandleAuthenticateAsync(HttpRequest request, string schemeName, string role, Func<UserDao, Task> notInRoleCallback)
     {
         if (!request.Cookies.ContainsKey(CookieConstants.AccessToken) || !request.Cookies.ContainsKey(CookieConstants.UserId))
         {
@@ -81,10 +80,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         string decryptedUserId = protector.Unprotect(userIdHeaderValue.Parameter);
         string decryptedToken = protector.Unprotect(authHeaderValue.Parameter);
 
-        TokenModel tokenModel = await _dbContext.Tokens
-            .Include(x => x.User)
-            .Where(x => x.UserId == decryptedUserId && x.User.UserName == request.Cookies[CookieConstants.UserName])
-            .FirstOrDefaultAsync();
+        TokenDao tokenModel = await _tokenRepository.GetUserTokenAsync(decryptedUserId, request.Cookies[CookieConstants.UserName]);
 
         if (tokenModel is null)
             return AuthenticateResult.Fail("You are not Authorized");
@@ -104,7 +100,7 @@ public class CustomAuthenticationHandler : ICustomAuthenticationHandler
         if (request.Cookies[CookieConstants.UserName] != username)
             return AuthenticateResult.Fail("You are not Authorized");
 
-        ApplicationUser user = await _userManager.FindByNameAsync(username);
+        UserDao user = await _userManager.FindByNameAsync(username);
         if (user is null)
             return AuthenticateResult.Fail("You are not Authorized");
 

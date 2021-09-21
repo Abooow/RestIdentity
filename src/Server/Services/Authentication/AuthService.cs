@@ -4,13 +4,13 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RestIdentity.DataAccess;
+using RestIdentity.DataAccess.Models;
+using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
@@ -21,25 +21,25 @@ namespace RestIdentity.Server.Services.Authentication;
 
 public sealed class AuthService : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ApplicationDbContext _context;
+    private readonly UserManager<UserDao> _userManager;
+    private readonly ITokenRepository _tokenRepository;
+    private readonly IAuditLogService _auditLogService;
     private readonly IdentityDefaultOptions _identityOptions;
     private readonly JwtSettings _jwtSettings;
     private readonly DataProtectionKeys _dataProtectionKeys;
-    private readonly IAuditLogService _auditLogService;
     private readonly IServiceProvider _provider;
 
     public AuthService(
-        UserManager<ApplicationUser> userManager,
-        ApplicationDbContext context,
+        UserManager<UserDao> userManager,
+        ITokenRepository tokenRepository,
+        IAuditLogService auditLogService,
         IOptions<IdentityDefaultOptions> identityOptions,
         IOptions<JwtSettings> jwtSettings,
         IOptions<DataProtectionKeys> dataProtectionKeys,
-        IAuditLogService auditLogService,
         IServiceProvider provider)
     {
         _userManager = userManager;
-        _context = context;
+        _tokenRepository = tokenRepository;
         _identityOptions = identityOptions.Value;
         _jwtSettings = jwtSettings.Value;
         _auditLogService = auditLogService;
@@ -50,7 +50,7 @@ public sealed class AuthService : IAuthService
     public async Task<Result<TokenResponse>> AuthenticateAsync(LoginRequest loginRequest)
     {
         // Find User.
-        ApplicationUser user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        UserDao user = await _userManager.FindByEmailAsync(loginRequest.Email);
         if (user is null)
         {
             Log.Error("Could Not find User {Email}", loginRequest.Email);
@@ -92,7 +92,7 @@ public sealed class AuthService : IAuthService
         return Result<TokenResponse>.Fail("Request Not Supported.").AsUnauthorized();
     }
 
-    private async Task<TokenResponse> CreateAuthTokenAsync(ApplicationUser user)
+    private async Task<TokenResponse> CreateAuthTokenAsync(UserDao user)
     {
         SymmetricSecurityKey key = new(Encoding.ASCII.GetBytes(_jwtSettings.Secret));
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
@@ -124,7 +124,7 @@ public sealed class AuthService : IAuthService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         string encryptedToken = protectorJwt.Protect(tokenHandler.WriteToken(token));
 
-        var refreshToken = new TokenModel()
+        var refreshToken = new TokenDao()
         {
             ClientId = _jwtSettings.ClientId,
             UserId = user.Id,
@@ -137,14 +137,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            var refreshTokens = await _context.Tokens.Where(x => x.UserId == user.Id).ToArrayAsync();
-
-            if (refreshTokens.Length > 0)
-                _context.RemoveRange(refreshTokens);
-
-            _context.Add(refreshToken);
-
-            await _context.SaveChangesAsync();
+            await _tokenRepository.AddUserTokenAsync(refreshToken);
         }
         catch (Exception e)
         {

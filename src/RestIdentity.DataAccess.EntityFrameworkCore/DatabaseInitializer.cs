@@ -1,14 +1,15 @@
-﻿using RestIdentity.Server.Data;
+﻿using Microsoft.Extensions.DependencyInjection;
+using RestIdentity.DataAccess.Data;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore;
 
-public class DatabaseInitializer : IDatabaseInitializer
+internal class DatabaseInitializer : IDatabaseInitializer
 {
     private readonly ApplicationDbContext _applicationDbContext;
 
-    public DatabaseInitializer(ApplicationDbContext applicationDbContext)
+    public DatabaseInitializer(IServiceProvider serviceProvider)
     {
-        _applicationDbContext = applicationDbContext;
+        _applicationDbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
     }
 
     public Task<bool> EnsureCreatedAsync()

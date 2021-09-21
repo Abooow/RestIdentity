@@ -1,6 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
+using RestIdentity.DataAccess;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Services.AuditLog;
 using Serilog;

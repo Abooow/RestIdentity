@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using RestIdentity.DataAccess;
 using RestIdentity.Logging;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Services.FunctionalServices;
@@ -10,30 +11,16 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
-        var host = CreateHostBuilder(args).Build();
+        IHost host = CreateHostBuilder(args).Build();
 
-        using var scope = host.Services.CreateScope();
-        var services = scope.ServiceProvider;
-
-        try
-        {
-            var dataProtectionKeysContext = services.GetService<DataProtectionKeysContext>();
-            var dbContext = services.GetService<ApplicationDbContext>();
-            var functionalService = services.GetService<IFunctionalService>();
-
-            await DbContextInitializer.InitializeAsync(dataProtectionKeysContext, dbContext, functionalService);
-        }
-        catch (Exception e)
-        {
-            Log.Error("An Error occurred while seeding the database {Error} {StackTrace} {InnerException} {Source}",
-                e.Message, e.StackTrace, e.InnerException, e.Source);
-        }
+        await InitializeDatabaseAsync(host);
 
         host.Run();
     }
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
+    public static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseSerilog((hotstingContext, loggongConfiguration) => loggongConfiguration
@@ -48,4 +35,25 @@ public static class Program
 
                 webBuilder.UseStartup<Startup>();
             });
+    }
+
+    private static async Task InitializeDatabaseAsync(IHost host)
+    {
+        var scope = host.Services.CreateScope();
+        var services = scope.ServiceProvider;
+
+        try
+        {
+            var dataProtectionKeysContext = services.GetService<DataProtectionKeysContext>();
+            var dbInitializer = services.GetService<IDatabaseInitializer>();
+            var functionalService = services.GetService<IFunctionalService>();
+
+            await DbContextInitializer.InitializeAsync(dataProtectionKeysContext, dbInitializer, functionalService);
+        }
+        catch (Exception e)
+        {
+            Log.Error("An Error occurred while seeding the database {Error} {StackTrace} {InnerException} {Source}",
+                e.Message, e.StackTrace, e.InnerException, e.Source);
+        }
+    }
 }

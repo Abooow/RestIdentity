@@ -4,16 +4,17 @@ namespace RestIdentity.DataAccess.Repositories;
 
 public interface IUserAvatarRepository
 {
+    string CreateAvatarHashForUser(string userId);
     string CreateAvatarHashForUser(UserDao user);
 
     Task<UserAvatarDao?> FindByUserIdAsync(string userId);
     Task<UserAvatarDao?> FindByUserNameAsync(string userName);
     Task<UserAvatarDao?> FindByAvatarHashAsync(string avatarHash);
 
-    Task AddUserAvatarAsync(UserDao user);
-    Task AddOrUpdateUserAvatarAsync(UserDao user);
-    Task UpdateUserAvatarAsync(UserDao user);
+    Task<UserAvatarDao> AddUserAvatarAsync(UserDao user);
+    Task<UserAvatarDao> AddOrUpdateUserAvatarAsync(UserDao user);
+    Task<UserAvatarDao?> UpdateUserAvatarAsync(UserDao user);
 
-    Task UseDefaultAvatarForUserAsync(string userId);
-    Task UseAvatarForUserAsync(string userId, string imageExtension);
+    Task<UserAvatarDao?> UseDefaultAvatarForUserAsync(string userId);
+    Task<UserAvatarDao?> UseAvatarForUserAsync(string userId, string imageExtension);
 }

@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
+using RestIdentity.DataAccess;
+using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.SignedInUser;
 using RestIdentity.Server.Services.UserAvatars;
@@ -19,7 +20,7 @@ namespace RestIdentity.Server.Services.User;
 
 internal sealed class UserService : IUserService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly UserManager<UserDao> _userManager;
     private readonly ISignedInUserService _signedInUserInfoService;
     private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IUrlHelperFactory _urlHelperFactory;
@@ -27,7 +28,7 @@ internal sealed class UserService : IUserService
     private readonly IUserAvatarService _userAvatarService;
 
     public UserService(
-        UserManager<ApplicationUser> userManager,
+        UserManager<UserDao> userManager,
         ISignedInUserService signedInUserInfoService,
         IActionContextAccessor actionContextAccessor,
         IUrlHelperFactory urlHelperFactory,
@@ -42,9 +43,9 @@ internal sealed class UserService : IUserService
         _userAvatarService = userAvatarService;
     }
 
-    public async Task<Result<ApplicationUser>> RegisterUserAsync(RegisterRequest registerRequest)
+    public async Task<Result<UserDao>> RegisterUserAsync(RegisterRequest registerRequest)
     {
-        var user = new ApplicationUser
+        var user = new UserDao
         {
             UserName = registerRequest.UserName,
             Email = registerRequest.Email,
@@ -55,7 +56,7 @@ internal sealed class UserService : IUserService
 
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
         if (!result.Succeeded)
-            return Result<ApplicationUser>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
+            return Result<UserDao>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
         await _userAvatarService.CreateDefaultAvatarAsync(user);
 
@@ -64,19 +65,19 @@ internal sealed class UserService : IUserService
 
         await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthRegistered);
 
-        return Result<ApplicationUser>.Success(user);
+        return Result<UserDao>.Success(user);
     }
 
-    public async Task<Result<ApplicationUser>> RegisterAdminUserAsync(RegisterRequest registerRequest)
+    public async Task<Result<UserDao>> RegisterAdminUserAsync(RegisterRequest registerRequest)
     {
-        ApplicationUser signedInUser = await GetSignedInUserAsync();
+        UserDao signedInUser = await GetSignedInUserAsync();
         if (signedInUser is null)
-            return Result<ApplicationUser>.Fail("Not Authorized.").AsUnauthorized();
+            return Result<UserDao>.Fail("Not Authorized.").AsUnauthorized();
 
         if (!await _userManager.IsInRoleAsync(signedInUser, RolesConstants.Admin))
-            return Result<ApplicationUser>.Fail("Not Authorized.").AsUnauthorized();
+            return Result<UserDao>.Fail("Not Authorized.").AsUnauthorized();
 
-        var user = new ApplicationUser
+        var user = new UserDao
         {
             UserName = registerRequest.UserName,
             Email = registerRequest.Email,
@@ -88,7 +89,7 @@ internal sealed class UserService : IUserService
 
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
         if (!result.Succeeded)
-            return Result<ApplicationUser>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
+            return Result<UserDao>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
         await _userAvatarService.CreateDefaultAvatarAsync(user);
 
@@ -98,10 +99,10 @@ internal sealed class UserService : IUserService
         await _auditLogService.AddAuditLogForSignInUserAsync(AuditLogsConstants.CreateAdminUser, "USER_ID: " + user.Id);
         await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.AuthRegistered);
 
-        return Result<ApplicationUser>.Success(user);
+        return Result<UserDao>.Success(user);
     }
 
-    public Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password)
+    public Task<(bool Success, UserDao User)> CheckLoggedInUserPasswordAsync(string password)
     {
         return CheckUserPasswordAsync(GetSignedInUserId(), password);
     }
@@ -114,11 +115,11 @@ internal sealed class UserService : IUserService
 
     public async Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId)
     {
-        UserAvatarModel userAvatar = await _userAvatarService.FindByIdAsync(userId);
+        UserAvatarDao userAvatar = await _userAvatarService.FindByUserIdAsync(userId);
         if (userAvatar is null)
             return null;
 
-        ApplicationUser user = userAvatar.User;
+        UserDao user = userAvatar.User;
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
         string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
 
@@ -142,11 +143,11 @@ internal sealed class UserService : IUserService
 
     public async Task<UserProfile> GetUserProfileByNameAsync(string userName)
     {
-        UserAvatarModel userAvatar = await _userAvatarService.FindByUserNameAsync(userName);
+        UserAvatarDao userAvatar = await _userAvatarService.FindByUserNameAsync(userName);
         if (userAvatar is null)
             return null;
 
-        ApplicationUser user = userAvatar.User;
+        UserDao user = userAvatar.User;
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
         string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
 
@@ -163,7 +164,7 @@ internal sealed class UserService : IUserService
 
     public async Task<IdentityUserResult> UpdateSignedInUserProfileAsync(UpdateProfileRequest updateProfileRequest)
     {
-        (bool passwordCheckSucceeded, ApplicationUser user) = await CheckLoggedInUserPasswordAsync(updateProfileRequest.Password);
+        (bool passwordCheckSucceeded, UserDao user) = await CheckLoggedInUserPasswordAsync(updateProfileRequest.Password);
         if (!passwordCheckSucceeded)
         {
             Log.Information("Failed to Update user profile");
@@ -192,7 +193,7 @@ internal sealed class UserService : IUserService
 
     public async Task<IdentityUserResult> ChangeSignedInUserPasswordAsync(ChangePasswordRequest changePasswordRequest)
     {
-        ApplicationUser loggedInUserResult = await GetSignedInUserAsync();
+        UserDao loggedInUserResult = await GetSignedInUserAsync();
         if (loggedInUserResult is null)
         {
             Log.Warning("Failed to change password for logged in User, User not found");
@@ -211,7 +212,7 @@ internal sealed class UserService : IUserService
 
     public async Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        UserDao user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
             Log.Warning("Failed to change password for {UserId}, User not found", userId);
@@ -233,14 +234,14 @@ internal sealed class UserService : IUserService
         return _signedInUserInfoService.GetUserId();
     }
 
-    public Task<ApplicationUser> GetSignedInUserAsync()
+    public Task<UserDao> GetSignedInUserAsync()
     {
         return _signedInUserInfoService.GetUserAsync();
     }
 
-    private async Task<(bool Success, ApplicationUser User)> CheckUserPasswordAsync(string id, string password)
+    private async Task<(bool Success, UserDao User)> CheckUserPasswordAsync(string id, string password)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(id);
+        UserDao user = await _userManager.FindByIdAsync(id);
         if (user is null || !await _userManager.CheckPasswordAsync(user, password))
             return (false, null);
 

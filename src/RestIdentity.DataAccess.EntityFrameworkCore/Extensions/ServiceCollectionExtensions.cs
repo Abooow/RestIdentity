@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RestIdentity.DataAccess.Data;
+using RestIdentity.DataAccess.EntityFrameworkCore;
 using RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
-using RestIdentity.Server.Data;
 
 namespace RestIdentity.DataAccess;
 
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddEfCoreDataAccessWithSqlServer(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
 
         return services;
     }

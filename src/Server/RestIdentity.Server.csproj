@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Client\RestIdentity.Client.csproj" />
     <ProjectReference Include="..\Logging\RestIdentity.Logging.csproj" />
+    <ProjectReference Include="..\RestIdentity.DataAccess.EntityFrameworkCore\RestIdentity.DataAccess.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Shared\RestIdentity.Shared.csproj" />
   </ItemGroup>
 

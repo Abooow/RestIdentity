@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RestIdentity.Server.Data;
+using RestIdentity.DataAccess.Data;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Migrations
 {

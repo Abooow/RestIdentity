@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using RestIdentity.DataAccess.Models;
+using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.Constants;
-using RestIdentity.Server.Data;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Cookies;
 using RestIdentity.Server.Services.SignedInUser;
 using Serilog;
@@ -11,20 +9,17 @@ namespace RestIdentity.Server.Services.AuditLog;
 
 public sealed class AuditLogService : IAuditLogService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IAuditLogRepository _auditLogRepository;
     private readonly ISignedInUserService _signedInUserService;
-    private readonly ApplicationDbContext _context;
     private readonly ICookieService _cookieService;
 
     public AuditLogService(
-        UserManager<ApplicationUser> userManager,
+        IAuditLogRepository auditLogRepository,
         ISignedInUserService signedInUserService,
-        ApplicationDbContext context,
         ICookieService cookieService)
     {
-        _userManager = userManager;
+        _auditLogRepository = auditLogRepository;
         _signedInUserService = signedInUserService;
-        _context = context;
         _cookieService = cookieService;
     }
 
@@ -50,65 +45,31 @@ public sealed class AuditLogService : IAuditLogService
         return AddAuditLogAsync(userId, type, null);
     }
 
-    public async Task AddAuditLogAsync(string userId, string type, string description)
+    public Task AddAuditLogAsync(string userId, string type, string description)
     {
-        var auditLog = new AuditLogModel()
+        var auditLog = new AuditLogDao()
         {
             Type = type,
             Description = description,
             UserId = userId,
             IpAddress = _cookieService.GetRemoteIpAddress(),
-            OperationgSystem = _cookieService.GetRemoteOperatingSystem(),
-            Date = DateTime.UtcNow
+            OperatingSystem = _cookieService.GetRemoteOperatingSystem(),
         };
 
-        await AddAuditLogAsync(auditLog);
+        return _auditLogRepository.AddAuditLogAsync(auditLog);
     }
 
-    public async Task<(bool UserFound, IEnumerable<AuditLogModel> AuditLogs)> GetPartialAuditLogsAsync(string userId)
+    public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetPartialAuditLogsAsync(string userId)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
-        if (user is null)
-            return (true, Array.Empty<AuditLogModel>());
+        IEnumerable<AuditLogDao> auditLogs = await _auditLogRepository.GetPartialAuditLogsAsync(userId, AuditLogsConstants.PartialAuditLogTypes);
 
-        AuditLogModel[] auditLogs = await _context.AuditLogs
-            .Where(x => x.UserId == userId && AuditLogsConstants.PartialAuditLogTypes.Contains(x.Type))
-            .OrderByDescending(x => x.Date)
-            .ToArrayAsync();
-
-        return (true, auditLogs);
+        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
     }
 
-    public async Task<(bool UserFound, IEnumerable<AuditLogModel> AuditLogs)> GetFullAuditLogsAsync(string userId)
+    public async Task<(bool UserFound, IEnumerable<AuditLogDao> AuditLogs)> GetFullAuditLogsAsync(string userId)
     {
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
-        if (user is null)
-            return (false, Array.Empty<AuditLogModel>());
+        IEnumerable<AuditLogDao> auditLogs = await _auditLogRepository.GetAuditLogsAsync(userId);
 
-        AuditLogModel[] auditLogs = await _context.AuditLogs
-            .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.Date)
-            .ToArrayAsync();
-
-        return (true, auditLogs);
-    }
-
-    private async Task AddAuditLogAsync(AuditLogModel auditLog)
-    {
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-
-        try
-        {
-            await _context.AuditLogs.AddAsync(auditLog);
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-        }
-        catch (Exception e)
-        {
-            Log.Error("An error occurred while committing an Audit Log. {Error} {StackTrace} {InnerException} {Source}",
-                e.Message, e.StackTrace, e.InnerException, e.Source);
-
-            await transaction.RollbackAsync();
-        }
+        return (auditLogs is not null, auditLogs ?? Enumerable.Empty<AuditLogDao>());
     }
 }

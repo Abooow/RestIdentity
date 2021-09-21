@@ -6,11 +6,12 @@ using System.Text;
 using ImageMagick;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using RestIdentity.DataAccess.Models;
+using RestIdentity.DataAccess.Repositories;
 using RestIdentity.Server.BackgroundServices.Channels;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models.Channels;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services.AuditLog;
 using RestIdentity.Server.Services.SignedInUser;
@@ -20,89 +21,54 @@ namespace RestIdentity.Server.Services.UserAvatars;
 
 internal sealed class UserAvatarService : IUserAvatarService
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly ISignedInUserService _signedInUserService;
+    private readonly IUserAvatarRepository _userAvatarRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly FileStorageOptions _fileStorageOptions;
     private readonly UserAvatarDefaultOptions _userAvatarOptions;
     private readonly UserAvatarChannel _userAvatarChannel;
 
     public UserAvatarService(
-        ApplicationDbContext dbContext,
         ISignedInUserService signedInUserService,
+        IUserAvatarRepository userAvatarRepository,
         IAuditLogService auditLogService,
         IOptions<FileStorageOptions> fileStorageOptions,
         IOptions<UserAvatarDefaultOptions> userAvatarOptions,
         UserAvatarChannel userAvatarChannel)
     {
-        _dbContext = dbContext;
         _signedInUserService = signedInUserService;
+        _userAvatarRepository = userAvatarRepository;
         _auditLogService = auditLogService;
         _fileStorageOptions = fileStorageOptions.Value;
         _userAvatarOptions = userAvatarOptions.Value;
         _userAvatarChannel = userAvatarChannel;
     }
 
-    public Task<UserAvatarModel> FindByIdAsync(string userId)
+    public Task<UserAvatarDao> FindByUserIdAsync(string userId)
     {
-        return _dbContext.UserAvatars
-            .Where(x => x.UserId == userId)
-            .Include(x => x.User)
-            .FirstOrDefaultAsync();
+        return _userAvatarRepository.FindByUserIdAsync(userId);
     }
 
-    public Task<UserAvatarModel> FindByUserNameAsync(string userName)
+    public Task<UserAvatarDao> FindByUserNameAsync(string userName)
     {
-        userName = userName.ToUpperInvariant();
-        var query = from u in _dbContext.Users
-                    from ua in _dbContext.UserAvatars.Include(x => x.User)
-                    where u.Id == ua.UserId && u.NormalizedUserName == userName
-                    select ua;
-
-        return query.FirstOrDefaultAsync();
+        return _userAvatarRepository.FindByUserNameAsync(userName);
     }
 
-    private Task<UserAvatarModel> FindByAvatarHashAsync(string avatarHash)
+    public Task<UserAvatarDao> FindByAvatarHashAsync(string avatarHash)
     {
-        return _dbContext.UserAvatars
-            .Where(x => x.AvatarHash == avatarHash)
-            .Include(x => x.User)
-            .FirstOrDefaultAsync();
+        return _userAvatarRepository.FindByAvatarHashAsync(avatarHash);
     }
 
-    public async Task CreateDefaultAvatarAsync(ApplicationUser user)
+    public async Task CreateDefaultAvatarAsync(UserDao user)
     {
-        UserAvatarModel existingUserAvatar = await FindByIdAsync(user.Id);
-        string userIdHash = HashUserId(user.Id);
+        UserAvatarDao userAvatar = await _userAvatarRepository.AddOrUpdateUserAvatarAsync(user);
 
-        if (existingUserAvatar is null)
-        {
-            // Create new.
-            var userAvatar = new UserAvatarModel(user)
-            {
-                AvatarHash = userIdHash
-            };
-
-            await _dbContext.UserAvatars.AddAsync(userAvatar);
-            await _dbContext.SaveChangesAsync();
-        }
-        else
-        {
-            // Update Existing.
-            existingUserAvatar.LastModifiedDate = DateTime.UtcNow;
-
-            _dbContext.Update(existingUserAvatar);
-            await _dbContext.SaveChangesAsync();
-
-            await _auditLogService.AddAuditLogAsync(user.Id, AuditLogsConstants.UserUpdatedDefaultAvatar);
-        }
-
-        CreateDefaultUserAvatar(user, userIdHash);
+        CreateDefaultUserAvatar(user, userAvatar.AvatarHash);
     }
 
     public async ValueTask<(string Location, string NormalizedContentType)> GetImageFileLocationAsync(string userHash, string contentType, int? size)
     {
-        UserAvatarModel userAvatar = await FindByAvatarHashAsync(userHash);
+        UserAvatarDao userAvatar = await FindByAvatarHashAsync(userHash);
         if (userAvatar is null)
             throw new Exception($"Could not find a User Avatar with userHash: {userHash}"); // TODO: Change to a good Exception type with a good message.
 
@@ -148,7 +114,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task<Result> RemoveAvatarForSignedInUserAsync()
     {
-        UserAvatarModel userAvatar = await RemoveUserAvatarAsync(_signedInUserService.GetUserId());
+        UserAvatarDao userAvatar = await RemoveUserAvatarAsync(_signedInUserService.GetUserId());
         if (userAvatar is null)
             return Result.Fail($"Failed to remove your avatar.");
 
@@ -159,7 +125,7 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task<Result> RemoveAvatarAsync(string userId)
     {
-        UserAvatarModel userAvatar = await RemoveUserAvatarAsync(userId);
+        UserAvatarDao userAvatar = await RemoveUserAvatarAsync(userId);
         if (userAvatar is null)
             return Result.Fail($"Could not find user with Id: {userId}");
 
@@ -171,7 +137,8 @@ internal sealed class UserAvatarService : IUserAvatarService
 
     public async Task CreateFromChannelAsync(UserAvatarChannelModel userAvatarChannelModel)
     {
-        string savePath = @$"{_fileStorageOptions.UserAvatarsPath}\{HashUserId(userAvatarChannelModel.UserId)}";
+        string avatarHash = _userAvatarRepository.CreateAvatarHashForUser(userAvatarChannelModel.UserId);
+        string savePath = @$"{_fileStorageOptions.UserAvatarsPath}\{avatarHash}";
         EnsureDirectoryCreated(savePath);
 
         var image = Image.FromFile(userAvatarChannelModel.TempFilePath);
@@ -237,15 +204,6 @@ internal sealed class UserAvatarService : IUserAvatarService
             Directory.CreateDirectory(directory);
     }
 
-    private static string HashUserId(string userId)
-    {
-        using var sha1 = SHA1.Create();
-        byte[] hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(userId));
-        string userIdHash = string.Concat(hash.Select(x => x.ToString("x2")));
-
-        return userIdHash;
-    }
-
     private static Color GetRandomColor()
     {
         var random = new Random();
@@ -260,7 +218,7 @@ internal sealed class UserAvatarService : IUserAvatarService
             resizedImage.Save($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.png", ImageFormat.Png);
         }
 
-        await UpdateUserAvatarAsync(userAvatarChannelModel.UserId, "png");
+        await _userAvatarRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "png");
     }
 
     private async Task CreateGifsAsync(UserAvatarChannelModel userAvatarChannelModel, Size originalSize, string savePath)
@@ -274,28 +232,12 @@ internal sealed class UserAvatarService : IUserAvatarService
             await resizedGif.WriteAsync($@"{savePath}\{_userAvatarOptions.AvatarFileName}{size}.gif", MagickFormat.Gif);
         }
 
-        await UpdateUserAvatarAsync(userAvatarChannelModel.UserId, "gif");
+        await _userAvatarRepository.UseAvatarForUserAsync(userAvatarChannelModel.UserId, "gif");
     }
 
-    private async Task<UserAvatarModel> UpdateUserAvatarAsync(string userId, string imageExtension)
+    private async Task<UserAvatarDao> RemoveUserAvatarAsync(string userId)
     {
-        UserAvatarModel userAvatar = await FindByIdAsync(userId);
-        if (userAvatar is null)
-            return null;
-
-        userAvatar.UsesDefaultAvatar = imageExtension is null;
-        userAvatar.ImageExtension = imageExtension;
-        userAvatar.LastModifiedDate = DateTime.UtcNow;
-
-        _dbContext.Update(userAvatar);
-        await _dbContext.SaveChangesAsync();
-
-        return userAvatar;
-    }
-
-    private async Task<UserAvatarModel> RemoveUserAvatarAsync(string userId)
-    {
-        UserAvatarModel userAvatar = await UpdateUserAvatarAsync(userId, null);
+        UserAvatarDao userAvatar = await _userAvatarRepository.UseDefaultAvatarForUserAsync(userId);
         if (userAvatar is null)
             return null;
 
@@ -310,7 +252,7 @@ internal sealed class UserAvatarService : IUserAvatarService
         return userAvatar;
     }
 
-    private void CreateDefaultUserAvatar(ApplicationUser user, string userIdHash)
+    private void CreateDefaultUserAvatar(UserDao user, string userIdHash)
     {
         Color backgroundColor = GetRandomColor();
         string userInitials = $"{user.FirstName[0]}{user.LastName[0]}".ToUpperInvariant();

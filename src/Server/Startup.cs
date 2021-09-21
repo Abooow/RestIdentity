@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using RestIdentity.DataAccess;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
 using RestIdentity.Server.Models.Options;
@@ -25,7 +26,7 @@ public sealed class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         // Database Connection.
-        services.AddSqlServerDatabase(Configuration.GetConnectionString("DefaultConnection"));
+        services.AddEfCoreDataAccessWithSqlServer(Configuration.GetConnectionString("DefaultConnection"));
 
         // Identity User
         IdentityDefaultOptions identityOptions = services.ConfigureDefaultIdentityOptions(Configuration, nameof(IdentityDefaultOptions));
@@ -47,6 +48,10 @@ public sealed class Startup
         // User Avatar Options.
         services.ConfigureUserAvatarOptions(Configuration, nameof(UserAvatarDefaultOptions));
 
+        // Repositories.
+        services.AddRepositories();
+
+        // Services.
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IAuditLogService, AuditLogService>();
 

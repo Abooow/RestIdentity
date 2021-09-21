@@ -1,5 +1,5 @@
-﻿using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
+﻿using RestIdentity.DataAccess.Models;
+using RestIdentity.Server.Models;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Wrapper;
@@ -8,10 +8,10 @@ namespace RestIdentity.Server.Services.User;
 
 public interface IUserService
 {
-    Task<Result<ApplicationUser>> RegisterUserAsync(RegisterRequest registerRequest);
-    Task<Result<ApplicationUser>> RegisterAdminUserAsync(RegisterRequest registerRequest);
+    Task<Result<UserDao>> RegisterUserAsync(RegisterRequest registerRequest);
+    Task<Result<UserDao>> RegisterAdminUserAsync(RegisterRequest registerRequest);
 
-    Task<(bool Success, ApplicationUser User)> CheckLoggedInUserPasswordAsync(string password);
+    Task<(bool Success, UserDao User)> CheckLoggedInUserPasswordAsync(string password);
 
     Task<PersonalUserProfile> GetLoggedInUserProfileAsync();
     Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId);
@@ -23,5 +23,5 @@ public interface IUserService
     Task<IdentityUserResult> ChangePasswordAsync(string userId, ChangePasswordRequest changePasswordRequest);
 
     string GetSignedInUserId();
-    Task<ApplicationUser> GetSignedInUserAsync();
+    Task<UserDao> GetSignedInUserAsync();
 }

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using RestIdentity.Server.Constants;
+using RestIdentity.DataAccess;
 using Serilog;
 
 namespace RestIdentity.Server.Services.AuthenticationHandler;

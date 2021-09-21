@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using RestIdentity.Server.Models.DAO;
+using RestIdentity.DataAccess.Models;
 
 namespace RestIdentity.Server.Models;
 
-public sealed record IdentityUserResult(IdentityResult IdentityResult, ApplicationUser? User)
+public sealed record IdentityUserResult(IdentityResult IdentityResult, UserDao? User)
 {
     public IEnumerable<IdentityError> Errors => IdentityResult.Errors;
     public bool Succeeded => IdentityResult.Succeeded;

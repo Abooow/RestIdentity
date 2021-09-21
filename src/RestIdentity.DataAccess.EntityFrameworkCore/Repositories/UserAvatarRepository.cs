@@ -1,9 +1,9 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using RestIdentity.DataAccess.Data;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
-using RestIdentity.Server.Data;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
@@ -16,13 +16,18 @@ internal class UserAvatarRepository : IUserAvatarRepository
         _dbContext = dbContext;
     }
 
-    public string CreateAvatarHashForUser(UserDao user)
+    public string CreateAvatarHashForUser(string userId)
     {
         using var sha1 = SHA1.Create();
-        byte[] hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(user.Id));
+        byte[] hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(userId));
         string userIdHash = string.Concat(hash.Select(x => x.ToString("x2")));
 
         return userIdHash;
+    }
+
+    public string CreateAvatarHashForUser(UserDao user)
+    {
+        return CreateAvatarHashForUser(user.Id);
     }
 
     public Task<UserAvatarDao?> FindByUserIdAsync(string userId)
@@ -54,7 +59,7 @@ internal class UserAvatarRepository : IUserAvatarRepository
             .FirstOrDefaultAsync()!;
     }
 
-    public async Task AddUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarDao> AddUserAvatarAsync(UserDao user)
     {
         var userAvatar = new UserAvatarDao(user)
         {
@@ -63,35 +68,38 @@ internal class UserAvatarRepository : IUserAvatarRepository
 
         await _dbContext.UserAvatars.AddAsync(userAvatar);
         await _dbContext.SaveChangesAsync();
+
+        return userAvatar;
     }
 
-    public async Task AddOrUpdateUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarDao> AddOrUpdateUserAvatarAsync(UserDao user)
     {
-        if (await UserHasAvatar(user.Id))
-            await UpdateUserAvatarAsync(user);
-        else
-            await AddUserAvatarAsync(user);
+        return await UserHasAvatar(user.Id)
+            ? (await UpdateUserAvatarAsync(user))!
+            : await AddUserAvatarAsync(user);
     }
 
-    public async Task UpdateUserAvatarAsync(UserDao user)
+    public async Task<UserAvatarDao?> UpdateUserAvatarAsync(UserDao user)
     {
         UserAvatarDao? existingUserAvatar = await FindByUserIdAsync(user.Id);
 
         if (existingUserAvatar is null)
-            return; // TODO: Throw Exception?
+            return null;
 
         existingUserAvatar.LastModifiedDate = DateTime.UtcNow;
 
         _dbContext.Update(existingUserAvatar);
         await _dbContext.SaveChangesAsync();
+
+        return existingUserAvatar;
     }
 
-    public Task UseDefaultAvatarForUserAsync(string userId)
+    public Task<UserAvatarDao?> UseDefaultAvatarForUserAsync(string userId)
     {
         return UpdateUserAvatarAsync(userId, null);
     }
 
-    public Task UseAvatarForUserAsync(string userId, string imageExtension)
+    public Task<UserAvatarDao?> UseAvatarForUserAsync(string userId, string imageExtension)
     {
         return UpdateUserAvatarAsync(userId, imageExtension);
     }
@@ -101,11 +109,11 @@ internal class UserAvatarRepository : IUserAvatarRepository
         return _dbContext.UserAvatars.Where(x => x.UserId == userId).AnyAsync();
     }
 
-    private async Task UpdateUserAvatarAsync(string userId, string? imageExtension)
+    private async Task<UserAvatarDao?> UpdateUserAvatarAsync(string userId, string? imageExtension)
     {
         UserAvatarDao? userAvatar = await FindByUserIdAsync(userId);
         if (userAvatar is null)
-            return; // TODO: Throw Exception?
+            return null;
 
         userAvatar.LastModifiedDate = DateTime.UtcNow;
         userAvatar.UsesDefaultAvatar = imageExtension is null;
@@ -113,5 +121,7 @@ internal class UserAvatarRepository : IUserAvatarRepository
 
         _dbContext.Update(userAvatar);
         await _dbContext.SaveChangesAsync();
+
+        return userAvatar;
     }
 }

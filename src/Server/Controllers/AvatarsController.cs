@@ -1,7 +1,7 @@
 ﻿using System.Drawing.Drawing2D;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestIdentity.Server.Constants;
+using RestIdentity.DataAccess;
 using RestIdentity.Server.Models.Channels;
 using RestIdentity.Server.Services.UserAvatars;
 using RestIdentity.Shared.Wrapper;

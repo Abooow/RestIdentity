@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RestIdentity.DataAccess.Data;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
-using RestIdentity.Server.Data;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 

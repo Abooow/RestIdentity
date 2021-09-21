@@ -2,22 +2,15 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using RestIdentity.Server.Constants;
+using RestIdentity.DataAccess;
 using RestIdentity.Server.Data;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.AuthenticationHandler;
 
 namespace RestIdentity.Server.Extensions;
 
 internal static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddSqlServerDatabase(this IServiceCollection services, string connectionString)
-    {
-        return services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
-    }
-
     public static IDataProtectionBuilder AddDataProtectionKeys(this IServiceCollection services, string dataProtectionKeysConnection)
     {
         services.AddDbContext<DataProtectionKeysContext>(options =>
@@ -28,7 +21,7 @@ internal static class ServiceCollectionExtensions
 
     public static IdentityBuilder AddUserIdentity(this IServiceCollection services, IdentityDefaultOptions identityDefaultOptions)
     {
-        return services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        return services.AddIdentityUserRepository(options =>
         {
             options.Password.RequireDigit = identityDefaultOptions.PasswordRequireDigit;
             options.Password.RequiredLength = identityDefaultOptions.PasswordRequiredLength;
@@ -44,7 +37,6 @@ internal static class ServiceCollectionExtensions
             options.User.RequireUniqueEmail = identityDefaultOptions.UserRequreUniqueEmail;
             options.SignIn.RequireConfirmedEmail = identityDefaultOptions.SignInRequreConfirmedEmail;
         })
-           .AddEntityFrameworkStores<ApplicationDbContext>()
            .AddDefaultTokenProviders();
     }
 

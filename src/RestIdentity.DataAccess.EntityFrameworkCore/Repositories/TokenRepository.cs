@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RestIdentity.DataAccess.Data;
 using RestIdentity.DataAccess.Models;
 using RestIdentity.DataAccess.Repositories;
-using RestIdentity.Server.Data;
 
 namespace RestIdentity.DataAccess.EntityFrameworkCore.Repositories;
 
@@ -29,8 +29,16 @@ internal class TokenRepository : ITokenRepository
 
     public Task<TokenDao?> GetUserTokenAsync(string userId)
     {
-#nullable disable
-        return _dbContext.Tokens.Where(x => x.UserId == userId).FirstOrDefaultAsync();
+        return _dbContext.Tokens.Where(x => x.UserId == userId).FirstOrDefaultAsync()!;
+    }
+
+    public Task<TokenDao?> GetUserTokenAsync(string userId, string userName)
+    {
+        userName = userName.ToUpperInvariant();
+
+        return _dbContext.Tokens.Include(x => x.User)
+            .Where(x => x.UserId == userId && x.User.NormalizedUserName == userName)
+            .FirstOrDefaultAsync()!;
     }
 
     public async Task<bool> RemoveAllUserTokensAsync(string userId)

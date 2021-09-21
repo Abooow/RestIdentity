@@ -1,9 +1,9 @@
-﻿using RestIdentity.Server.Models.DAO;
+﻿using RestIdentity.DataAccess.Models;
 
 namespace RestIdentity.Server.Services.SignedInUser;
 
 public interface ISignedInUserService
 {
     string GetUserId();
-    Task<ApplicationUser> GetUserAsync();
+    Task<UserDao> GetUserAsync();
 }

@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using RestIdentity.Server.Constants;
+using RestIdentity.DataAccess;
+using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.UserAvatars;
 using Serilog;
 
@@ -10,13 +11,13 @@ namespace RestIdentity.Server.Services.FunctionalServices;
 
 public sealed class FunctionalService : IFunctionalService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly UserManager<UserDao> _userManager;
     private readonly IUserAvatarService _userAvatarService;
     private readonly AdminUserOptions _adminUserOptions;
     private readonly CustomerUserOptions _customerUserOptions;
 
     public FunctionalService(
-        UserManager<ApplicationUser> userManager,
+        UserManager<UserDao> userManager,
         IUserAvatarService userAvatarService,
         IOptions<AdminUserOptions> adminUserOptions,
         IOptions<CustomerUserOptions> customerUserOptions)
@@ -27,9 +28,14 @@ public sealed class FunctionalService : IFunctionalService
         _customerUserOptions = customerUserOptions.Value;
     }
 
+    public Task<bool> AnyUsersExistsAsync()
+    {
+        return _userManager.Users.AnyAsync();
+    }
+
     public Task CreateDefaultAdminUserAsync()
     {
-        var adminUser = new ApplicationUser()
+        var adminUser = new UserDao()
         {
             Email = _adminUserOptions.Email,
             UserName = _adminUserOptions.Username,
@@ -44,7 +50,7 @@ public sealed class FunctionalService : IFunctionalService
 
     public Task CreateDefaultCustomerUserAsync()
     {
-        var customerUser = new ApplicationUser()
+        var customerUser = new UserDao()
         {
             Email = _customerUserOptions.Email,
             UserName = _customerUserOptions.Username,
@@ -57,7 +63,7 @@ public sealed class FunctionalService : IFunctionalService
         return CreateUserAsync(customerUser, _customerUserOptions.Password, RolesConstants.Customer);
     }
 
-    private async Task CreateUserAsync(ApplicationUser user, string password, params string[] roles)
+    private async Task CreateUserAsync(UserDao user, string password, params string[] roles)
     {
         try
         {

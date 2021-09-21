@@ -2,7 +2,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestIdentity.Server.Models.DAO;
+using RestIdentity.DataAccess.Models;
 using RestIdentity.Shared.Models;
 using RestIdentity.Shared.Models.Requests;
 using RestIdentity.Shared.Models.Response;
@@ -19,7 +19,7 @@ public sealed partial class AuthController
         [FromHeader(Name = "Identity.TwoFactorUserId")][Required(ErrorMessage = "The header Identity.TwoFactorUserId is requred")] string _,
         [FromBody] LoginWith2faRequest request)
     {
-        ApplicationUser user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        UserDao user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
             return NotFound(Result.Fail("Unable to load two-factor authentication user.").AsNotFound());
 
@@ -34,7 +34,7 @@ public sealed partial class AuthController
     [HttpPost("enableTwoFactorAuth")]
     public async Task<IActionResult> EnableTwoFactorAuth()
     {
-        ApplicationUser user = await _userManager.GetUserAsync(User);
+        UserDao user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail($"Unable to load user.").AsNotFound());
 
@@ -60,7 +60,7 @@ public sealed partial class AuthController
     [HttpPost("disableTwoFactorAuth")]
     public async Task<IActionResult> DisableTwoFactorAuth()
     {
-        ApplicationUser user = await _userManager.GetUserAsync(User);
+        UserDao user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail($"Unable to load user.").AsNotFound());
 
@@ -93,7 +93,7 @@ public sealed partial class AuthController
     [HttpGet("generateRecoveryCodes")]
     public async Task<IActionResult> GenerateRecoveryCodes()
     {
-        ApplicationUser user = await _userManager.GetUserAsync(User);
+        UserDao user = await _userManager.GetUserAsync(User);
         if (user is null)
             return NotFound(Result.Fail("Unable to load user.").AsNotFound());
 
@@ -113,7 +113,7 @@ public sealed partial class AuthController
         [FromHeader(Name = "Identity.TwoFactorUserId")][Required(ErrorMessage = "The header Identity.TwoFactorUserId is requred")] string _,
         LoginWithRecoveryCodeRequest loginWithRecoveryRequest)
     {
-        ApplicationUser user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        UserDao user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
             return BadRequest(Result.Fail("Unable to load two-factor authentication user.").AsBadRequest());
 

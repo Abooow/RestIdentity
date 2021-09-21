@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using RestIdentity.DataAccess.Models;
 using RestIdentity.Server.Constants;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.DAO;
 using RestIdentity.Server.Services.Cookies;
 using Serilog;
 
@@ -11,13 +11,13 @@ namespace RestIdentity.Server.Services.SignedInUser;
 
 internal sealed class SignedInUserService : ISignedInUserService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly UserManager<UserDao> _userManager;
     private readonly ICookieService _cookieService;
     private readonly IServiceProvider _serviceProvider;
     private readonly DataProtectionKeys _dataProtectionKeys;
 
     public SignedInUserService(
-        UserManager<ApplicationUser> userManager,
+        UserManager<UserDao> userManager,
         ICookieService cookieService,
         IServiceProvider serviceProvider,
         IOptions<DataProtectionKeys> dataProtectionKeys)
@@ -46,13 +46,13 @@ internal sealed class SignedInUserService : ISignedInUserService
         return null;
     }
 
-    public async Task<ApplicationUser> GetUserAsync()
+    public async Task<UserDao> GetUserAsync()
     {
         string userId = GetUserId();
         if (userId is null)
             return null;
 
-        ApplicationUser user = await _userManager.FindByIdAsync(userId);
+        UserDao user = await _userManager.FindByIdAsync(userId);
         return user;
     }
 }

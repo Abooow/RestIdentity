@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RestIdentity.DataAccess;
 using RestIdentity.DataAccess.Models;
 
-namespace RestIdentity.Server.Data;
+namespace RestIdentity.DataAccess.Data;
 
-public sealed class ApplicationDbContext : IdentityDbContext<UserDao>
+internal sealed class ApplicationDbContext : IdentityDbContext<UserDao>
 {
     public DbSet<TokenDao> Tokens { get; set; }
     public DbSet<AuditLogDao> AuditLogs { get; set; }
