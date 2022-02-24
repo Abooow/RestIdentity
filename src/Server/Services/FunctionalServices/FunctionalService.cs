@@ -13,20 +13,17 @@ public sealed class FunctionalService : IFunctionalService
 {
     private readonly UserManager<UserRecord> _userManager;
     private readonly IRolesRepository _rolesRepository;
-    private readonly IUserAvatarService _userAvatarService;
     private readonly AdminUserOptions _adminUserOptions;
     private readonly CustomerUserOptions _customerUserOptions;
 
     public FunctionalService(
         UserManager<UserRecord> userManager,
         IRolesRepository rolesRepository,
-        IUserAvatarService userAvatarService,
         IOptions<AdminUserOptions> adminUserOptions,
         IOptions<CustomerUserOptions> customerUserOptions)
     {
         _userManager = userManager;
         _rolesRepository = rolesRepository;
-        _userAvatarService = userAvatarService;
         _adminUserOptions = adminUserOptions.Value;
         _customerUserOptions = customerUserOptions.Value;
     }
@@ -93,7 +90,6 @@ public sealed class FunctionalService : IFunctionalService
                 return;
             }
 
-            await _userAvatarService.CreateDefaultAvatarAsync(user);
             foreach (string role in roles)
             {
                 await _userManager.AddToRoleAsync(user, role);

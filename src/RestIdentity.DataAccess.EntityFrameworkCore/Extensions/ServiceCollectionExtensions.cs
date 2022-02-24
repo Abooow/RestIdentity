@@ -21,7 +21,6 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        services.AddTransient<IUserAvatarsRepository, UserAvatarsRepository>();
         services.AddTransient<IAuditLogsRepository, AuditLogsRepository>();
         services.AddTransient<ITokensRepository, TokensRepository>();
         services.AddTransient<IRolesRepository, RolesRepository>();

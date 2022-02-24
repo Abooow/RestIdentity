@@ -9,7 +9,6 @@ internal sealed class ApplicationDbContext : IdentityDbContext<UserRecord>
 {
     public DbSet<TokenRecord> Tokens { get; set; }
     public DbSet<AuditLogRecord> AuditLogs { get; set; }
-    public DbSet<UserAvatarRecord> UserAvatars { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

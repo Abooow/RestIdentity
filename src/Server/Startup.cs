@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using RestIdentity.DataAccess;
 using RestIdentity.Server.Extensions;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server;
@@ -36,12 +35,6 @@ public sealed class Startup
         services.AddCustomerAuthentication();
         services.AddAdminAuthentication();
 
-        // File Storage.
-        services.ConfigureFileStorageOptions(Configuration, nameof(FileStorageOptions));
-
-        // User Avatar Options.
-        services.ConfigureUserAvatarOptions(Configuration, nameof(UserAvatarDefaultOptions));
-
         // Repositories.
         services.AddRepositories();
 
@@ -64,9 +57,6 @@ public sealed class Startup
         services.AddControllers().AddInvalidModelStateResponse();
         services.AddControllersWithViews();
         services.AddRazorPages();
-
-        // Background Services.
-        services.AddUserAvatarBackgroundService();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

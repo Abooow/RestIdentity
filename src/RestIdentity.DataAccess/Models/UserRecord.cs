@@ -14,6 +14,4 @@ public sealed class UserRecord : IdentityUser
     public string LastName { get; set; }
 
     public DateTime DateCreated { get; set; }
-
-    public UserAvatarRecord UserAvatar { get; set; }
 }

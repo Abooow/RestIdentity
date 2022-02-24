@@ -2,7 +2,6 @@
 
 public sealed record UserProfile
 (
-    string AvatarUrl,
     string UserName,
     string FirstName,
     string LastName,

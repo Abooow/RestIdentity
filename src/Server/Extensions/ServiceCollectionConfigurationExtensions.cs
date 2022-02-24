@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using RestIdentity.Server.Models;
-using RestIdentity.Server.Models.Options;
 using RestIdentity.Server.Services;
 
 namespace RestIdentity.Server.Extensions;
@@ -40,28 +39,6 @@ internal static class ServiceCollectionConfigurationExtensions
         services.Configure<JwtSettings>(jwtSettingsSection);
 
         return jwtSettingsSection.Get<JwtSettings>();
-    }
-
-    public static FileStorageOptions ConfigureFileStorageOptions(this IServiceCollection services, IConfiguration configuration, string fileStorageSectionKey)
-    {
-        IConfigurationSection fileStorageOptionsSection = configuration.GetSection(fileStorageSectionKey);
-        services.Configure<FileStorageOptions>(fileStorageOptionsSection);
-
-        FileStorageOptions storageOptions = fileStorageOptionsSection.Get<FileStorageOptions>();
-
-        // Ensure the directories exists.
-        Directory.CreateDirectory(storageOptions.UserAvatarsPath);
-        Directory.CreateDirectory(storageOptions.TempFilesPath);
-
-        return storageOptions;
-    }
-
-    public static UserAvatarDefaultOptions ConfigureUserAvatarOptions(this IServiceCollection services, IConfiguration configuration, string userAvatarOptionsSectionKey)
-    {
-        IConfigurationSection userAvatarOptionsSection = configuration.GetSection(userAvatarOptionsSectionKey);
-        services.Configure<UserAvatarDefaultOptions>(userAvatarOptionsSection);
-
-        return userAvatarOptionsSection.Get<UserAvatarDefaultOptions>();
     }
 
     public static void ConfigureWritable<T>(this IServiceCollection services, IConfigurationSection section, string fileName) where T : class, new()

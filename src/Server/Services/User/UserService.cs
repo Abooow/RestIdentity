@@ -22,22 +22,19 @@ internal sealed class UserService : IUserService
     private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IUrlHelperFactory _urlHelperFactory;
     private readonly IAuditLogService _auditLogService;
-    private readonly IUserAvatarService _userAvatarService;
 
     public UserService(
         UserManager<UserRecord> userManager,
         ISignedInUserService signedInUserInfoService,
         IActionContextAccessor actionContextAccessor,
         IUrlHelperFactory urlHelperFactory,
-        IAuditLogService auditLogService,
-        IUserAvatarService userAvatarService)
+        IAuditLogService auditLogService)
     {
         _userManager = userManager;
         _signedInUserInfoService = signedInUserInfoService;
         _actionContextAccessor = actionContextAccessor;
         _urlHelperFactory = urlHelperFactory;
         _auditLogService = auditLogService;
-        _userAvatarService = userAvatarService;
     }
 
     public async Task<Result<UserRecord>> RegisterUserAsync(RegisterRequest registerRequest)
@@ -54,8 +51,6 @@ internal sealed class UserService : IUserService
         IdentityResult result = await _userManager.CreateAsync(user, registerRequest.Password);
         if (!result.Succeeded)
             return Result<UserRecord>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
-
-        await _userAvatarService.CreateDefaultAvatarAsync(user);
 
         Log.Information("Customer User {Email} registered", user.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Customer);
@@ -88,8 +83,6 @@ internal sealed class UserService : IUserService
         if (!result.Succeeded)
             return Result<UserRecord>.Fail(result.Errors.Select(x => x.Description)).AsBadRequest();
 
-        await _userAvatarService.CreateDefaultAvatarAsync(user);
-
         Log.Information("Admin User {Email} registered by {SignInUser}", user.Email, signedInUser.Email);
         await _userManager.AddToRoleAsync(user, RolesConstants.Admin);
 
@@ -112,17 +105,10 @@ internal sealed class UserService : IUserService
 
     public async Task<PersonalUserProfile> GetUserProfileByIdAsync(string userId)
     {
-        UserAvatarRecord userAvatar = await _userAvatarService.FindByUserIdAsync(userId);
-        if (userAvatar is null)
-            return null;
-
-        UserRecord user = userAvatar.User;
+        UserRecord user = await _userManager.FindByIdAsync(userId);
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
-        string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
 
         var userProfile = new PersonalUserProfile(
-            userAvatarUrl,
-            userAvatar.UsesDefaultAvatar,
             user.Email,
             user.UserName,
             user.FirstName,
@@ -140,16 +126,10 @@ internal sealed class UserService : IUserService
 
     public async Task<UserProfile> GetUserProfileByNameAsync(string userName)
     {
-        UserAvatarRecord userAvatar = await _userAvatarService.FindByUserNameAsync(userName);
-        if (userAvatar is null)
-            return null;
-
-        UserRecord user = userAvatar.User;
+        UserRecord user = await _userManager.FindByNameAsync(userName);
         IList<string> userRoles = await _userManager.GetRolesAsync(user);
-        string userAvatarUrl = GetUserAvatarUrl(userAvatar.AvatarHash);
 
         var userProfile = new UserProfile(
-            userAvatarUrl,
             user.UserName,
             user.FirstName,
             user.LastName,
